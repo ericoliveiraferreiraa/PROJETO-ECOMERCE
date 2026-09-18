@@ -1,0 +1,19 @@
+{
+  "name": "projeto-ecomerce",
+  "version": "1.0.0",
+  "description": "E-commerce de chocolates, doces e snacks nacionais e internacionais, desenvolvido como projeto acadêmico na área de Tecnologia da Informação.",
+  "main": "index.js",
+  "scripts": {
+     "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
