@@ -6,6 +6,14 @@ O projeto tem como objetivo desenvolver uma plataforma completa de comércio ele
 
 ---
 
+## 📌 TRELLO
+
+https://trello.com/b/QXwY2ftQ/%F0%9F%8D%AB-choco-world-e-commerce
+
+## 📌 FIGMA
+
+https://www.figma.com/design/BGwWciANeWGqn5yMJx2Evy/Sem-t%25C3%25ADtulo?t=oT74qaV5zCcAN98r-0
+
 ## 📌 Sobre o projeto
 
 A **Choco World** é uma loja virtual voltada para crianças e adultos, aproximadamente de 5 a 45 anos, oferecendo uma variedade de chocolates, doces e snacks.
