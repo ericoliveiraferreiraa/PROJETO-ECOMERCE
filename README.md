@@ -551,30 +551,33 @@ PRODUTO
 
 - identificador_transação
 
----
-
 **ADMINISTRADOR**
 
--id_admin
+- id_admin
 
--nome
+- nome
 
--email
+- email
 
--senha
+- senha
 
--data_cadastro
-
----
+- data_cadastro
 
 **LOG ADMINISTRADOR**
 
--id_log
--acao
--entidade
--id_registro
--descricao
--data_hora
+- id_log
+
+- acao
+
+- entidade
+
+- id_registro
+
+- descricao
+
+- data_hora
+
+---
 
 # 🔌 API REST
 
