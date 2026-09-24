@@ -553,6 +553,29 @@ PRODUTO
 
 ---
 
+**ADMINISTRADOR**
+
+-id_admin
+
+-nome
+
+-email
+
+-senha
+
+-data_cadastro
+
+---
+
+**LOG ADMINISTRADOR**
+
+-id_log
+-acao
+-entidade
+-id_registro
+-descricao
+-data_hora
+
 # 🔌 API REST
 
 Exemplos de rotas planejadas:
