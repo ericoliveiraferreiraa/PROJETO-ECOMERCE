@@ -1,19 +1,20 @@
 {
-  "name": "projeto-ecomerce",
+  "name": "backend-choco-world",
   "version": "1.0.0",
-  "description": "E-commerce de chocolates, doces e snacks nacionais e internacionais, desenvolvido como projeto acadêmico na área de Tecnologia da Informação.",
-  "main": "index.js",
+  "description": "API do projeto academico Choco World",
+  "main": "server.js",
   "scripts": {
-     "dev": "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "express": "^5.2.1"
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.4"
   }
 }
