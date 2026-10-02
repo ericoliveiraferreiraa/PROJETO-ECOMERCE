@@ -2,18 +2,19 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const produtosRoutes = require("./routes/produtos.routes");
-const clientesRoutes = require("./routes/clientes.routes");
-const errorHandler = require("./middlewares/errorHandler");
+const produtosRoutes = require("./src/routes/produtos.routes");
+const clientesRoutes = require("./src/routes/clientes.routes");
+const pedidosRoutes = require("./src/routes/pedidos.routes");
+const errorHandler = require("./src/middlewares/errorHandler");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
 app.use("/produtos", produtosRoutes);
 app.use("/clientes", clientesRoutes);
+app.use("/pedidos", pedidosRoutes);
 
 // health check simples
 app.get("/", (req, res) => res.json({ status: "API Choco World no ar" }));

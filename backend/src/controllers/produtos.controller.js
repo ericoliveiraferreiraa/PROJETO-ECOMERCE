@@ -1,4 +1,4 @@
-const db = require('../db');
+const db = require('../../db');
 
 // GET /produtos  (RF: listar produtos, com estoque e categoria)
 function listar(req, res, next) {
@@ -53,17 +53,14 @@ function criar(req, res, next) {
     INSERT INTO estoque (id_produto, quantidade) VALUES (?, ?)
   `);
 
-  // transacao: se o trigger de preco (RN02) abortar, nada e gravado
-  const transacao = db.transaction(() => {
+  db.exec('BEGIN');
+  try {
     const resultado = inserirProduto.run(id_categoria, nome, descricao, preco, imagem || null);
     inserirEstoque.run(resultado.lastInsertRowid, quantidade_estoque || 0);
-    return resultado.lastInsertRowid;
-  });
-
-  try {
-    const id_produto = transacao();
-    res.status(201).json({ id_produto, mensagem: 'Produto cadastrado com sucesso.' });
+    db.exec('COMMIT');
+    res.status(201).json({ id_produto: resultado.lastInsertRowid, mensagem: 'Produto cadastrado com sucesso.' });
   } catch (err) {
+    db.exec('ROLLBACK');
     next(err);
   }
 }
