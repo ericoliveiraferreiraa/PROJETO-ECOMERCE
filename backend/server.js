@@ -5,6 +5,7 @@ const cors = require("cors");
 const produtosRoutes = require("./src/routes/produtos.routes");
 const clientesRoutes = require("./src/routes/clientes.routes");
 const pedidosRoutes = require("./src/routes/pedidos.routes");
+const categoriasRoutes = require("./src/routes/categorias.routes");
 const administradoresRoutes = require("./src/routes/administradores.routes");
 const errorHandler = require("./src/middlewares/errorHandler");
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/produtos", produtosRoutes);
 app.use("/clientes", clientesRoutes);
 app.use("/pedidos", pedidosRoutes);
+app.use("/categorias", categoriasRoutes);
 app.use("/administradores", administradoresRoutes);
 
 // health check simples
