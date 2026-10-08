@@ -7,6 +7,11 @@
 function errorHandler(err, req, res, next) {
   const msg = err.message || '';
 
+    // erros proprios com status definido (ex: consulta de CEP)
+  if (err.status) {
+    return res.status(err.status).json({ erro: err.message });
+  }
+
   if (/RN\d+/.test(msg)) {
     return res.status(400).json({ erro: msg.replace(/^.*?(RN\d+)/, '$1') });
   }
