@@ -1,3 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+@import "tailwindcss";
+
+@theme {
+  --color-choco-vinho: #761b2b;
+  --color-choco-vinho-claro: #a52b3b;
+  --color-choco-creme: #fff8ef;
+  --color-choco-marrom: #48251e;
+  --color-choco-vermelho: #c72c41;
+  --color-choco-pessego: #efb9a5;
+}
