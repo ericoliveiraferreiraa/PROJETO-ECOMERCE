@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 // Protege rotas que exigem cliente autenticado.
 // Espera o header: Authorization: Bearer <token>
 // Rejeita tokens de administrador (tipo: 'admin').
+
 function autenticarCliente(req, res, next) {
   const authHeader = req.headers.authorization;
 
@@ -15,14 +16,21 @@ function autenticarCliente(req, res, next) {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (payload.tipo === 'admin') {
-      return res.status(403).json({ erro: 'Rota exclusiva para clientes.' });
+    if (
+      payload.tipo === 'admin' ||
+      !payload.id_cliente
+    ) {
+      return res.status(403).json({
+        erro: 'Rota exclusiva para clientes.',
+      });
     }
 
-    req.cliente = payload; // { id_cliente, nome }
+    req.cliente = payload;
     next();
   } catch (err) {
-    return res.status(401).json({ erro: 'Token invalido ou expirado.' });
+    return res.status(401).json({
+      erro: 'Token invalido ou expirado.',
+    });
   }
 }
 
