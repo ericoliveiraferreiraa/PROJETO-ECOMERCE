@@ -56,4 +56,27 @@ function login(req, res, next) {
   }
 }
 
-module.exports = { cadastrar, login };
+// GET /administradores/logs?limite=50
+function listarLogs(req, res, next) {
+  try {
+    const pedido = Math.floor(Number(req.query.limite));
+    const limite = Number.isFinite(pedido) && pedido > 0 ? Math.min(pedido, 200) : 50;
+
+    const logs = db.prepare(`
+      SELECT l.id_log, l.data_hora, a.nome AS administrador,
+             l.acao, l.entidade, l.id_registro, l.descricao
+      FROM log_administrativo l
+      JOIN administrador a ON a.id_administrador = l.id_administrador
+      ORDER BY l.id_log DESC
+      LIMIT ?
+    `).all(limite);
+
+    res.json(logs);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { cadastrar, login, listarLogs };
+
+

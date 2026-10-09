@@ -1,4 +1,5 @@
 const db = require('../../db');
+const { registrar } = require('../services/logAdmin');
 
 // GET /categorias  (publico: usado nos filtros do front)
 function listar(req, res, next) {
@@ -24,7 +25,9 @@ function criar(req, res, next) {
     const resultado = db.prepare(
       'INSERT INTO categoria (nome, descricao) VALUES (?, ?)'
     ).run(nome, descricao || null);
-
+    
+    registrar(req.administrador.id_administrador, 'CRIAR', 'categoria', resultado.lastInsertRowid, `Categoria "${nome}" cadastrada`);
+    
     res.status(201).json({ id_categoria: resultado.lastInsertRowid, mensagem: 'Categoria cadastrada com sucesso.' });
   } catch (err) {
     next(err); // nome repetido cai no UNIQUE e vira 409 no errorHandler

@@ -1,4 +1,5 @@
 const db = require('../../db');
+const { registrar } = require('../services/logAdmin');
 
 // GET /produtos  (RF: listar produtos, com estoque e categoria)
 function listar(req, res, next) {
@@ -58,6 +59,7 @@ function criar(req, res, next) {
     const resultado = inserirProduto.run(id_categoria, nome, descricao, preco, imagem || null);
     inserirEstoque.run(resultado.lastInsertRowid, quantidade_estoque || 0);
     db.exec('COMMIT');
+    registrar(req.administrador.id_administrador, 'CRIAR', 'produto', resultado.lastInsertRowid, `Produto "${nome}" cadastrado`);
     res.status(201).json({ id_produto: resultado.lastInsertRowid, mensagem: 'Produto cadastrado com sucesso.' });
   } catch (err) {
     db.exec('ROLLBACK');
@@ -70,6 +72,7 @@ function inativar(req, res, next) {
   try {
     const resultado = db.prepare('UPDATE produto SET ativo = 0 WHERE id_produto = ?').run(req.params.id);
     if (resultado.changes === 0) return res.status(404).json({ erro: 'Produto nao encontrado.' });
+    registrar(req.administrador.id_administrador, 'INATIVAR', 'produto', Number(req.params.id), 'Produto inativado');
     res.json({ mensagem: 'Produto inativado.' });
   } catch (err) {
     next(err);

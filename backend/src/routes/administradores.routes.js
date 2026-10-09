@@ -6,4 +6,6 @@ const administradoresController = require('../controllers/administradores.contro
 router.post('/', autenticarAdmin, administradoresController.cadastrar);
 router.post('/login', administradoresController.login);
 
+router.get('/logs', autenticarAdmin, administradoresController.listarLogs);
+
 module.exports = router;
