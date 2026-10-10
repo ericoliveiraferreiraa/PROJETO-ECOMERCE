@@ -4,8 +4,7 @@ import { InstagramIcon, FacebookIcon, TikTokIcon } from './icons';
 const LINKS = [
   { rotulo: 'Sobre Nós', href: '/sobre-nos' },
   { rotulo: 'Contato', href: '/contato' },
-  { rotulo: 'Termos de Uso', href: '/termos' },
-  { rotulo: 'Política de Privacidade', href: '/privacidade' },
+  
 ];
 
 // TODO: troque o "#" pelo endereco real de cada rede social

@@ -20,10 +20,10 @@ const IMG_HISTORIA = null;
 // Produtos de exemplo: so aparecem se a API estiver fora do ar,
 // para voce conseguir ver o layout mesmo sem o back-end rodando.
 const PRODUTOS_EXEMPLO = [
-  { id_produto: 'exemplo-1', nome: 'Chocolate ao Leite', descricao: '100g', preco: 1290, imagem: null },
-  { id_produto: 'exemplo-2', nome: 'Chocolate 70%', descricao: '100g', preco: 1490, imagem: null },
-  { id_produto: 'exemplo-3', nome: 'Caramelo Salgado', descricao: '100g', preco: 1390, imagem: null },
-  { id_produto: 'exemplo-4', nome: 'Cookies & Cream', descricao: '100g', preco: 1390, imagem: null },
+  { id_produto: 'exemplo-1', nome: 'Chocolate ao Leite', descricao: '100g', preco: 1290, imagem: '/public/barra-ao-leite.jpeg' },
+  { id_produto: 'exemplo-2', nome: 'Chocolate 70%', descricao: '100g', preco: 1490, imagem: '/public/barra-70-cacau.jpeg' },
+  { id_produto: 'exemplo-3', nome: 'Caramelo Salgado', descricao: '100g', preco: 1390, imagem: '/public/barra-caramelo-salgado.jpeg' },
+  { id_produto: 'exemplo-4', nome: 'Chocolate 85% NOIR', descricao: '100g', preco: 1390, imagem: '/public/barra-85-noir.jpeg' },
 ];
 
 // Contorno "rasgado" da borda de papel da secao Historia
