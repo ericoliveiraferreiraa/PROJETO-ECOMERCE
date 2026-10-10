@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { api, salvarToken } from '../services/api';
+import { avisarSessaoAtualizada } from '../services/sessao';
 
 const campo =
   'mt-1 w-full rounded-xl border border-choco-pessego/70 bg-white px-4 py-3 text-choco-marrom outline-none placeholder:text-choco-marrom/50 focus:border-choco-vinho focus:ring-2 focus:ring-choco-vinho/15';
@@ -81,9 +82,11 @@ export default function AuthPage({ tipo = 'login' }) {
       });
 
       salvarToken(resposta.token);
-      localStorage.setItem('tipoUsuario', admin ? 'admin' : 'cliente');
+        localStorage.setItem('tipoUsuario', admin ? 'admin' : 'cliente');
 
-      window.location.href = admin ? '/admin' : '/';
+        avisarSessaoAtualizada();
+
+        window.location.href = admin ? '/admin' : '/';
     } catch (erroApi) {
       setErro(erroApi.message || 'Não foi possível concluir a operação.');
     } finally {
