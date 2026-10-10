@@ -14,8 +14,8 @@ import { adicionarAoCarrinho } from '../services/carrinho';
 //   import imgHero from '../assets/hero.png';
 //   const IMG_HERO = imgHero;
 // ============================================================
-const IMG_HERO = null;
-const IMG_HISTORIA = null;
+const IMG_HERO = '/public/6364bab4-5da3-451a-87d8-8ba9888c94c0.jpg';
+const IMG_HISTORIA = '/public/banner.jpg';
 
 // Produtos de exemplo: so aparecem se a API estiver fora do ar,
 // para voce conseguir ver o layout mesmo sem o back-end rodando.
