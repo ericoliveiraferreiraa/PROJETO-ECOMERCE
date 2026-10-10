@@ -21,6 +21,7 @@ app.use("/clientes", clientesRoutes);
 app.use("/pedidos", pedidosRoutes);
 app.use("/categorias", categoriasRoutes);
 app.use("/enderecos", enderecosRoutes);
+app.use('/estoque', require('./src/routes/estoque.routes'));
 app.use("/dashboard", dashboardRoutes);
 app.use("/administradores", administradoresRoutes);
 
