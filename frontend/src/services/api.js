@@ -1,30 +1,56 @@
 const API_URL = 'http://localhost:4000';
 
 export function getToken() {
-  return localStorage.getItem('token');
+return localStorage.getItem('token');
 }
 
 export function salvarToken(token) {
-  localStorage.setItem('token', token);
+localStorage.setItem('token', token);
 }
 
 export function sair() {
-  localStorage.removeItem('token');
+localStorage.removeItem('token');
 }
 
-// Funcao unica para falar com a API.
-// autenticado: true manda o token no header Authorization.
-export async function api(caminho, { metodo = 'GET', corpo, autenticado = false } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (autenticado) headers.Authorization = `Bearer ${getToken()}`;
+// Função única para comunicação com a API.
+// Aceita method/body e também metodo/corpo para compatibilidade.
+export async function api(caminho, opcoes = {}) {
+const metodo = opcoes.method ?? opcoes.metodo ?? 'GET';
+const corpo = opcoes.body ?? opcoes.corpo;
+const autenticado = opcoes.autenticado ?? false;
 
-  const resposta = await fetch(`${API_URL}${caminho}`, {
-    method: metodo,
-    headers,
-    body: corpo ? JSON.stringify(corpo) : undefined,
-  });
+const headers = {};
 
-  const dados = await resposta.json().catch(() => ({}));
-  if (!resposta.ok) throw new Error(dados.erro || 'Erro na requisicao');
-  return dados;
+if (corpo !== undefined && corpo !== null) {
+headers['Content-Type'] = 'application/json';
+}
+
+if (autenticado) {
+const token = getToken();
+
+
+if (token) {
+  headers.Authorization = `Bearer ${token}`;
+}
+
+
+}
+
+const resposta = await fetch(`${API_URL}${caminho}`, {
+method: metodo,
+headers,
+body: corpo !== undefined && corpo !== null
+? JSON.stringify(corpo)
+: undefined,
+});
+
+const dados = await resposta.json().catch(() => ({}));
+
+if (!resposta.ok) {
+throw new Error(
+dados.erro || `Erro na requisição (${resposta.status})`
+);
+}
+
+return dados;
 }

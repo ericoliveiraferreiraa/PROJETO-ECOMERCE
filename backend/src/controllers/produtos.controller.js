@@ -79,4 +79,38 @@ function inativar(req, res, next) {
   }
 }
 
-module.exports = { listar, obterPorId, criar, inativar };
+
+function listarAdmin(req, res, next) {
+  try {
+    const produtos = db.prepare(`
+      SELECT
+        pr.id_produto,
+        pr.nome,
+        pr.descricao,
+        pr.preco,
+        pr.imagem,
+        pr.ativo,
+        c.id_categoria,
+        c.nome AS categoria,
+        COALESCE(e.quantidade, 0) AS estoque
+      FROM produto pr
+      JOIN categoria c
+        ON c.id_categoria = pr.id_categoria
+      LEFT JOIN estoque e
+        ON e.id_produto = pr.id_produto
+      ORDER BY pr.nome
+    `).all();
+
+    res.json(produtos);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  listar,
+  listarAdmin,
+  obterPorId,
+  criar,
+  inativar,
+};
