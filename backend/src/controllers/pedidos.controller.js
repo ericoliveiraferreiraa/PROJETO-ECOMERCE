@@ -1,52 +1,178 @@
+
 const db = require('../../db');
 
-// POST /pedidos  (RF07, RF16, RF17 — criar pedido com itens do carrinho)
-// Corpo esperado:
-// { "itens": [ { "id_produto": 1, "quantidade": 2 }, { "id_produto": 2, "quantidade": 1 } ] }
+// POST /pedidos
+// Cria um pedido sem baixar o estoque.
+// O estoque sera debitado na confirmacao do pagamento.
 function criar(req, res, next) {
   const { itens } = req.body;
-  const id_cliente = req.cliente.id_cliente; // vem do middleware de autenticacao
+  const id_cliente = req.cliente.id_cliente;
 
   if (!Array.isArray(itens) || itens.length === 0) {
-    return res.status(400).json({ erro: 'O pedido precisa ter pelo menos um item.' });
+    return res.status(400).json({
+      erro: 'O pedido precisa ter pelo menos um item.',
+    });
   }
 
-  const buscarProduto = db.prepare('SELECT id_produto, preco FROM produto WHERE id_produto = ? AND ativo = 1');
-  const inserirPedido = db.prepare(`INSERT INTO pedido (id_cliente, valor_total, status) VALUES (?, ?, 'aguardando_pagamento')`);
+  // Valida e consolida produtos repetidos no carrinho.
+  const quantidadesPorProduto = new Map();
+
+  for (const item of itens) {
+    const id_produto = Number(item?.id_produto);
+    const quantidade = Number(item?.quantidade);
+
+    if (!Number.isInteger(id_produto) || id_produto <= 0) {
+      return res.status(400).json({
+        erro: 'ID de produto invalido.',
+      });
+    }
+
+    if (!Number.isInteger(quantidade) || quantidade <= 0) {
+      return res.status(400).json({
+        erro: 'A quantidade de cada produto deve ser um inteiro positivo.',
+      });
+    }
+
+    const quantidadeAcumulada =
+      (quantidadesPorProduto.get(id_produto) || 0) + quantidade;
+
+    if (!Number.isSafeInteger(quantidadeAcumulada)) {
+      return res.status(400).json({
+        erro: 'Quantidade total invalida para um produto.',
+      });
+    }
+
+    quantidadesPorProduto.set(id_produto, quantidadeAcumulada);
+  }
+
+  const buscarProduto = db.prepare(`
+    SELECT id_produto, nome, preco
+    FROM produto
+    WHERE id_produto = ? AND ativo = 1
+  `);
+
+  const buscarEstoque = db.prepare(`
+    SELECT quantidade
+    FROM estoque
+    WHERE id_produto = ?
+  `);
+
+  const inserirPedido = db.prepare(`
+    INSERT INTO pedido (id_cliente, valor_total, status)
+    VALUES (?, ?, 'aguardando_pagamento')
+  `);
+
   const inserirItem = db.prepare(`
-    INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario, subtotal)
+    INSERT INTO item_pedido (
+      id_pedido,
+      id_produto,
+      quantidade,
+      preco_unitario,
+      subtotal
+    )
     VALUES (?, ?, ?, ?, ?)
   `);
 
-  db.exec('BEGIN');
-  try {
-    let valorTotal = 0;
-    const itensValidados = itens.map((item) => {
-      const produto = buscarProduto.get(item.id_produto);
-      if (!produto) throw new Error(`Produto ${item.id_produto} nao encontrado ou inativo.`);
-      if (!item.quantidade || item.quantidade <= 0) throw new Error('Quantidade invalida para um dos itens.');
+  let transacaoAberta = false;
 
-      const subtotal = produto.preco * item.quantidade;
+  try {
+    // Impede que outra escrita altere o estoque entre a verificacao
+    // e a criacao do pedido. O estoque ainda nao sera reduzido.
+    db.exec('BEGIN IMMEDIATE');
+    transacaoAberta = true;
+
+    const itensValidados = [];
+    let valorTotal = 0;
+
+    for (const [id_produto, quantidade] of quantidadesPorProduto) {
+      const produto = buscarProduto.get(id_produto);
+
+      if (!produto) {
+        const erro = new Error(
+          `Produto ${id_produto} nao encontrado ou inativo.`
+        );
+        erro.statusCode = 404;
+        throw erro;
+      }
+
+      const estoque = buscarEstoque.get(id_produto);
+
+      if (!estoque || estoque.quantidade < quantidade) {
+        const erro = new Error(
+          `Estoque insuficiente para o produto ${produto.nome}.`
+        );
+        erro.statusCode = 409;
+        throw erro;
+      }
+
+      const subtotal = produto.preco * quantidade;
+
+      if (!Number.isSafeInteger(subtotal) || subtotal <= 0) {
+        const erro = new Error(
+          `Valor invalido para o produto ${produto.nome}.`
+        );
+        erro.statusCode = 400;
+        throw erro;
+      }
+
       valorTotal += subtotal;
-      return { id_produto: produto.id_produto, quantidade: item.quantidade, preco: produto.preco, subtotal };
-    });
+
+      if (!Number.isSafeInteger(valorTotal)) {
+        const erro = new Error('O valor total do pedido e invalido.');
+        erro.statusCode = 400;
+        throw erro;
+      }
+
+      itensValidados.push({
+        id_produto,
+        quantidade,
+        preco: produto.preco,
+        subtotal,
+      });
+    }
 
     const resultadoPedido = inserirPedido.run(id_cliente, valorTotal);
-    const id_pedido = resultadoPedido.lastInsertRowid;
+    const id_pedido = Number(resultadoPedido.lastInsertRowid);
 
     for (const item of itensValidados) {
-      inserirItem.run(id_pedido, item.id_produto, item.quantidade, item.preco, item.subtotal);
+      inserirItem.run(
+        id_pedido,
+        item.id_produto,
+        item.quantidade,
+        item.preco,
+        item.subtotal
+      );
     }
 
     db.exec('COMMIT');
-    res.status(201).json({ id_pedido, valor_total: valorTotal, status: 'aguardando_pagamento' });
+    transacaoAberta = false;
+
+    return res.status(201).json({
+      id_pedido,
+      valor_total: valorTotal,
+      status: 'aguardando_pagamento',
+    });
   } catch (err) {
-    db.exec('ROLLBACK');
-    next(err);
+    if (transacaoAberta) {
+      try {
+        db.exec('ROLLBACK');
+      } catch (erroRollback) {
+        console.error('Erro ao reverter a transacao:', erroRollback);
+      }
+    }
+
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({
+        erro: err.message,
+      });
+    }
+
+    return next(err);
   }
 }
 
-// GET /pedidos  (RF24 — listar pedidos do cliente autenticado)
+// GET /pedidos
+// Lista os pedidos do cliente autenticado.
 function listarDoCliente(req, res, next) {
   try {
     const pedidos = db.prepare(`
@@ -56,36 +182,62 @@ function listarDoCliente(req, res, next) {
       ORDER BY data_pedido DESC
     `).all(req.cliente.id_cliente);
 
-    res.json(pedidos);
+    return res.json(pedidos);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 }
 
-// GET /pedidos/:id  (detalhe do pedido com os itens, só se for do proprio cliente)
+// GET /pedidos/:id
+// Retorna os detalhes somente para o dono do pedido.
 function obterPorId(req, res, next) {
   try {
+    const id_pedido = Number(req.params.id);
+
+    if (!Number.isInteger(id_pedido) || id_pedido <= 0) {
+      return res.status(400).json({
+        erro: 'ID do pedido invalido.',
+      });
+    }
+
     const pedido = db.prepare(`
       SELECT id_pedido, id_cliente, data_pedido, status, valor_total
-      FROM pedido WHERE id_pedido = ?
-    `).get(req.params.id);
+      FROM pedido
+      WHERE id_pedido = ?
+    `).get(id_pedido);
 
-    if (!pedido) return res.status(404).json({ erro: 'Pedido nao encontrado.' });
-    if (pedido.id_cliente !== req.cliente.id_cliente) {
-      return res.status(403).json({ erro: 'Este pedido nao pertence a voce.' });
+    if (!pedido) {
+      return res.status(404).json({
+        erro: 'Pedido nao encontrado.',
+      });
+    }
+
+    if (Number(pedido.id_cliente) !== Number(req.cliente.id_cliente)) {
+      return res.status(403).json({
+        erro: 'Este pedido nao pertence a voce.',
+      });
     }
 
     const itens = db.prepare(`
-      SELECT ip.id_produto, pr.nome AS produto, ip.quantidade, ip.preco_unitario, ip.subtotal
+      SELECT
+        ip.id_produto,
+        pr.nome AS produto,
+        ip.quantidade,
+        ip.preco_unitario,
+        ip.subtotal
       FROM item_pedido ip
       JOIN produto pr ON pr.id_produto = ip.id_produto
       WHERE ip.id_pedido = ?
     `).all(pedido.id_pedido);
 
-    res.json({ ...pedido, itens });
+    return res.json({ ...pedido, itens });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 }
 
-module.exports = { criar, listarDoCliente, obterPorId };
+module.exports = {
+  criar,
+  listarDoCliente,
+  obterPorId,
+};

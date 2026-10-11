@@ -6,6 +6,7 @@ const { autenticarAdmin } = require('../middlewares/auth');
 // rotas publicas (qualquer visitante pode ver o catalogo)
 router.get('/', produtosController.listar);
 router.get('/:id', produtosController.obterPorId);
+router.get('/admin/listar', autenticarAdmin, produtosController.listarAdmin);
 
 // rotas restritas a administrador
 router.post('/', autenticarAdmin, produtosController.criar);

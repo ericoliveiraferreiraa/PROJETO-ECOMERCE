@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Imagem({
   src,
@@ -7,6 +7,10 @@ export default function Imagem({
   rotulo = 'Imagem do produto',
 }) {
   const [falhou, setFalhou] = useState(false);
+
+  useEffect(() => {
+    setFalhou(false);
+  }, [src]);
 
   if (!src || falhou) {
     return (
