@@ -8,6 +8,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import AuthPage from './pages/AuthPage';
 import MinhaConta from './pages/MinhaConta';
 import MeusPedidos from './pages/MeusPedidos';
+import SobreNos from './pages/SobreNos';
+import Contato from './pages/Contato';
+import TicketPremiado from './pages/TicketPremiado';
 
 import { encerrarSessao } from './services/sessao';
 
@@ -106,6 +109,15 @@ export default function App() {
 
     case '/meus-pedidos':
       return <MeusPedidos />;
+
+    case '/sobre-nos':
+  return <SobreNos />;
+
+case '/contato':
+  return <Contato />;
+
+case '/ticket-premiado':
+  return <TicketPremiado />;  
 
     default:
       return <Home />;
