@@ -11,5 +11,6 @@ router.get('/admin/listar', autenticarAdmin, produtosController.listarAdmin);
 // rotas restritas a administrador
 router.post('/', autenticarAdmin, produtosController.criar);
 router.patch('/:id/inativar', autenticarAdmin, produtosController.inativar);
+router.patch('/:id', autenticarAdmin, produtosController.editar);
 
 module.exports = router;
