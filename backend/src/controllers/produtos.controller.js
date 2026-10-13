@@ -107,10 +107,96 @@ function listarAdmin(req, res, next) {
   }
 }
 
+
+function editar(req, res, next) {
+  const id = Number(req.params.id);
+  const {
+    id_categoria,
+    nome,
+    descricao,
+    preco,
+    imagem,
+  } = req.body;
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ erro: 'ID do produto inválido.' });
+  }
+
+  if (
+    !Number.isInteger(Number(id_categoria)) ||
+    Number(id_categoria) <= 0 ||
+    typeof nome !== 'string' ||
+    !nome.trim() ||
+    typeof descricao !== 'string' ||
+    !Number.isInteger(Number(preco)) ||
+    Number(preco) <= 0 ||
+    (imagem !== null && imagem !== undefined && typeof imagem !== 'string')
+  ) {
+    return res.status(400).json({
+      erro: 'Informe nome, descrição, categoria e preço válido. O preço deve estar em centavos.',
+    });
+  }
+
+  try {
+    const produtoAtual = db.prepare(`
+      SELECT id_produto, nome, id_categoria
+      FROM produto
+      WHERE id_produto = ?
+    `).get(id);
+
+    if (!produtoAtual) {
+      return res.status(404).json({ erro: 'Produto não encontrado.' });
+    }
+
+    const categoria = db.prepare(`
+      SELECT id_categoria
+      FROM categoria
+      WHERE id_categoria = ?
+    `).get(Number(id_categoria));
+
+    if (!categoria) {
+      return res.status(400).json({ erro: 'Categoria não encontrada.' });
+    }
+
+    db.prepare(`
+      UPDATE produto
+      SET id_categoria = ?,
+          nome = ?,
+          descricao = ?,
+          preco = ?,
+          imagem = ?
+      WHERE id_produto = ?
+    `).run(
+      Number(id_categoria),
+      nome.trim(),
+      descricao.trim(),
+      Number(preco),
+      typeof imagem === 'string' && imagem.trim()
+        ? imagem.trim()
+        : null,
+      id
+    );
+
+    registrar(
+      req.administrador.id_administrador,
+      'EDITAR',
+      'produto',
+      id,
+      `Produto "${produtoAtual.nome}" atualizado`
+    );
+
+    return res.json({ mensagem: 'Produto atualizado com sucesso.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+
 module.exports = {
   listar,
   listarAdmin,
   obterPorId,
   criar,
+  editar,
   inativar,
 };
