@@ -22,8 +22,10 @@ export default function Footer() {
     <footer className="bg-choco-vinho text-white">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_auto_1fr] md:items-center">
         <div className="flex justify-center md:justify-start">
-          <Logo variante="rodape" />
-        </div>
+  <a href="/" aria-label="Choco World, voltar para o início">
+    <Logo variante="rodape" />
+  </a>
+</div>
 
         <nav aria-label="Rodapé">
           <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs">
