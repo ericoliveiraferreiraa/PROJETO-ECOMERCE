@@ -9,18 +9,18 @@ export default function CardProduto({ produto, fundo, onAdicionar }) {
   return (
     <article className="flex h-full flex-col rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
       <div
-        className="flex aspect-[4/5] items-center justify-center rounded-xl p-3"
+        className="relative aspect-[4/5] overflow-hidden rounded-xl"
         style={{ backgroundColor: fundo }}
       >
         <Imagem
           src={produto.imagem}
           alt={produto.nome}
           rotulo="Imagem do produto"
-          className="max-h-full w-full rounded-lg object-contain"
+          className="absolute inset-0 h-full w-full rounded-lg object-contain p-3"
         />
       </div>
 
-      <div className="mt-3 px-1">
+      <div className="mt-3 mb-3 px-1">
         <h3 className="truncate text-sm font-bold text-choco-marrom" title={produto.nome}>
           {produto.nome}
         </h3>
@@ -31,7 +31,7 @@ export default function CardProduto({ produto, fundo, onAdicionar }) {
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-black/10 px-1 pt-3">
+      <div className="mt-auto flex items-center justify-between border-t border-black/10 px-1 pt-3">
         <span className="text-sm font-extrabold text-choco-vermelho">{formatarPreco(produto.preco)}</span>
         <button
           type="button"

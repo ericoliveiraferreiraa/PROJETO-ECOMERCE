@@ -58,7 +58,7 @@ export default function CarrosselProdutos({ produtos, onAdicionar }) {
         {produtos.map((produto, i) => (
           <div
             key={produto.id_produto}
-            className="shrink-0 basis-[78%] snap-start sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]"
+            className="min-w-0 shrink-0 basis-[78%] snap-start sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]"
           >
             <CardProduto produto={produto} fundo={FUNDOS[i % FUNDOS.length]} onAdicionar={onAdicionar} />
           </div>
