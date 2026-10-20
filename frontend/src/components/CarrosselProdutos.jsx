@@ -88,11 +88,7 @@ export default function CarrosselProdutos({
         {produtos.map((produto, indice) => (
           <div
             key={produto.id_produto}
-<<<<<<< HEAD
-            className="flex shrink-0 snap-start basis-[78%] items-stretch sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]"
-=======
             className="min-w-0 shrink-0 basis-[78%] snap-start sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]"
->>>>>>> kauan
           >
             <div className="flex w-full">
               <CardProduto
