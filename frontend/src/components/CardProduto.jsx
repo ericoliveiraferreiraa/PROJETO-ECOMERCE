@@ -9,13 +9,18 @@ export default function CardProduto({ produto, fundo, onAdicionar }) {
     <article className="flex h-full min-w-0 flex-col rounded-2xl bg-white p-3 shadow-sm ring-1 ring-black/5">
       {/* Área de imagem com proporção fixa */}
       <div
+<<<<<<< HEAD
         className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-xl"
+=======
+        className="relative aspect-[4/5] overflow-hidden rounded-xl"
+>>>>>>> kauan
         style={{ backgroundColor: fundo }}
       >
         <Imagem
           src={produto.imagem}
           alt={produto.nome}
           rotulo="Imagem do produto"
+<<<<<<< HEAD
           className="absolute inset-0 h-full w-full object-contain p-3"
         />
       </div>
@@ -26,6 +31,14 @@ export default function CardProduto({ produto, fundo, onAdicionar }) {
           className="truncate text-sm font-bold text-choco-marrom"
           title={produto.nome}
         >
+=======
+          className="absolute inset-0 h-full w-full rounded-lg object-contain p-3"
+        />
+      </div>
+
+      <div className="mt-3 mb-3 px-1">
+        <h3 className="truncate text-sm font-bold text-choco-marrom" title={produto.nome}>
+>>>>>>> kauan
           {produto.nome}
         </h3>
 
@@ -40,12 +53,17 @@ export default function CardProduto({ produto, fundo, onAdicionar }) {
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Preço e botão sempre na parte inferior */}
       <div className="mt-3 flex shrink-0 items-center justify-between gap-2 border-t border-black/10 px-1 pt-3">
         <span className="truncate text-sm font-extrabold text-choco-vermelho">
           {formatarPreco(produto.preco)}
         </span>
 
+=======
+      <div className="mt-auto flex items-center justify-between border-t border-black/10 px-1 pt-3">
+        <span className="text-sm font-extrabold text-choco-vermelho">{formatarPreco(produto.preco)}</span>
+>>>>>>> kauan
         <button
           type="button"
           onClick={() => onAdicionar(produto)}
