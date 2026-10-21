@@ -2,7 +2,7 @@ export default function Logo({ variante = 'navbar' }) {
   const tamanhos = {
     navbar: 'w-28 sm:w-36',
     rodape: 'w-28 sm:w-32',
-    hero: 'w-40 sm:w-56',
+    hero: 'w-20 sm:w-24',
   };
 
   return (
