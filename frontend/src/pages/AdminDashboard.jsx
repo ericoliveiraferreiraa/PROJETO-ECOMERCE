@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, sair } from '../services/api';
 import { formatarPreco } from '../utils/moeda';
 
+
 const SECOES = [
   { id: 'dashboard', nome: 'Dashboard', icone: '📊' },
   { id: 'produtos', nome: 'Produtos', icone: '🍫' },
