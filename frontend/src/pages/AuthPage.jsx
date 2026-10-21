@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { api, salvarToken } from '../services/api';
 import { avisarSessaoAtualizada } from '../services/sessao';
+import Logo from '../components/Logo';
 
 const campo =
   'mt-1 w-full rounded-xl border border-choco-pessego/70 bg-white px-4 py-3 text-choco-marrom outline-none placeholder:text-choco-marrom/50 focus:border-choco-vinho focus:ring-2 focus:ring-choco-vinho/15';
@@ -102,14 +103,9 @@ export default function AuthPage({ tipo = 'login' }) {
 
   return (
     <main className="flex min-h-screen flex-col bg-choco-creme text-choco-marrom">
-      <header className="flex items-center justify-between border-b border-choco-pessego/50 bg-white px-5 py-4 sm:px-10">
-        <a href="/" className="flex items-center gap-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-choco-vinho text-xl text-white">
-            🍫
-          </span>
-          <span className="text-xl font-extrabold">
-            Choco<span className="text-choco-vinho">World</span>
-          </span>
+            <header className="flex items-center justify-between border-b border-choco-pessego/50 bg-white px-5 py-2 sm:px-10">
+        <a href="/" aria-label="Choco World - página inicial">
+          <Logo variante="auth" />
         </a>
 
         <a
