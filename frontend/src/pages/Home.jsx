@@ -45,7 +45,7 @@ const PRODUTOS_EXEMPLO = [
 
 const BANNERS_HOME = [
   {
-    imagem: '/banner-sobrenos.jpg',
+    imagem: '/sobre-choco.jpeg',
     alt: 'Conheça a história da Choco World',
     titulo: 'Muito mais que chocolate',
     descricao:
@@ -54,7 +54,7 @@ const BANNERS_HOME = [
     link: '/sobre-nos',
   },
   {
-    imagem: '/banner-ticket-premiado.jpg',
+    imagem: '/ticket-premium.jpeg',
     alt: 'Banner do Ticket Premiado Choco World',
     titulo: 'Uma surpresa pode estar esperando',
     descricao:
@@ -63,7 +63,7 @@ const BANNERS_HOME = [
     link: '/ticket-premiado',
   },
   {
-    imagem: '/banner-filantropia.jpg',
+    imagem: '/choco-filantropia.jpeg',
     alt: 'Iniciativa de filantropia da Choco World',
     titulo: 'Chocolate que espalha felicidade',
     descricao:
@@ -175,17 +175,18 @@ export default function Home() {
         >
           <div className="mx-auto max-w-6xl">
             <div className="relative overflow-hidden rounded-2xl bg-choco-vinho shadow-lg">
-              <div className="grid min-h-[320px] items-stretch md:grid-cols-2">
-                <div className="flex flex-col items-start justify-center p-7 text-white sm:p-10 lg:p-12">
+              {/* Altura FIXA: o card nao muda de tamanho de um banner para o outro */}
+              <div className="grid h-[36rem] grid-rows-[1fr_13rem] md:h-[380px] md:grid-cols-2 md:grid-rows-1">
+                <div className="flex min-h-0 flex-col items-start justify-center overflow-hidden p-6 text-white sm:p-8 lg:p-12">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-choco-dourado">
                     Descubra a Choco World
                   </p>
 
-                  <h2 className="mt-4 text-3xl font-extrabold leading-tight sm:text-4xl">
+                  <h2 className="mt-4 text-2xl font-extrabold leading-tight sm:text-3xl lg:text-4xl">
                     {banner.titulo}
                   </h2>
 
-                  <p className="mt-4 max-w-lg leading-relaxed text-white/85">
+                  <p className="mt-4 line-clamp-3 max-w-lg leading-relaxed text-white/85">
                     {banner.descricao}
                   </p>
 
@@ -198,13 +199,13 @@ export default function Home() {
                   </a>
                 </div>
 
-                <div className="relative min-h-[220px] bg-white/10">
+                <div className="relative min-h-0 bg-white/10">
                   <Imagem
                     key={banner.imagem}
                     src={banner.imagem}
                     alt={banner.alt}
                     rotulo="Banner da Choco World"
-                    className="h-full min-h-[220px] w-full object-cover md:absolute md:inset-0"
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
 
                   <button
