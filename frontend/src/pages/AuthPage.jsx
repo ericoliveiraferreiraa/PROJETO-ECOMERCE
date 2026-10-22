@@ -27,9 +27,16 @@ export default function AuthPage({ tipo = 'login' }) {
   const [carregando, setCarregando] = useState(false);
 
   function atualizar(evento) {
+    const { name, value } = evento.target;
+    const valor = name === 'nome'
+      ? value.replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR')
+      : name === 'cpf' || name === 'telefone'
+        ? value.replace(/\D/g, '').slice(0, 11)
+        : value;
+
     setDados({
       ...dados,
-      [evento.target.name]: evento.target.value,
+      [name]: valor,
     });
   }
 
@@ -43,6 +50,17 @@ export default function AuthPage({ tipo = 'login' }) {
       return;
     }
 
+    if (cadastro && dados.cpf.replace(/\D/g, '').length !== 11) {
+      setErro('O CPF deve conter exatamente 11 dígitos.');
+      return;
+    }
+
+    const telefoneLimpo = dados.telefone.replace(/\D/g, '');
+    if (cadastro && telefoneLimpo.length !== 10 && telefoneLimpo.length !== 11) {
+      setErro('Informe o telefone com DDD e número (10 ou 11 dígitos).');
+      return;
+    }
+
     setCarregando(true);
 
     try {
@@ -50,7 +68,7 @@ export default function AuthPage({ tipo = 'login' }) {
         await api('/clientes', {
           metodo: 'POST',
           corpo: {
-            nome: dados.nome.trim(),
+            nome: dados.nome.trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR'),
             cpf: dados.cpf.replace(/\D/g, ''),
             email: dados.email.trim(),
             telefone: dados.telefone.replace(/\D/g, ''),
@@ -212,6 +230,7 @@ export default function AuthPage({ tipo = 'login' }) {
                         value={dados.cpf}
                         onChange={atualizar}
                         inputMode="numeric"
+                        maxLength={11}
                         placeholder="Seu CPF"
                         required
                       />
@@ -227,6 +246,7 @@ export default function AuthPage({ tipo = 'login' }) {
                         onChange={atualizar}
                         autoComplete="tel"
                         inputMode="tel"
+                        maxLength={11}
                         placeholder="DDD + número"
                         required
                       />

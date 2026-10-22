@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Imagem from '../components/Imagem';
+import { InstagramIcon, FacebookIcon, TikTokIcon } from '../components/icons';
 
 const IMG_CONTATO = '/banner-fabrica.jpg';
 
@@ -119,31 +120,22 @@ export default function Contato() {
 
               <div className="mt-7 border-t border-choco-pessego/50 pt-5">
                 <h3 className="text-sm font-bold">Redes sociais</h3>
-
                 <div className="mt-3 flex gap-3">
-                  <a
-                    href="#"
-                    aria-label="Instagram"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 font-bold text-choco-vermelho"
-                  >
-                    ig
-                  </a>
-
-                  <a
-                    href="#"
-                    aria-label="Facebook"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 font-bold text-choco-vermelho"
-                  >
-                    f
-                  </a>
-
-                  <a
-                    href="#"
-                    aria-label="TikTok"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 font-bold text-choco-vermelho"
-                  >
-                    ♪
-                  </a>
+                  {[
+                    { nome: 'Instagram', Icone: InstagramIcon },
+                    { nome: 'Facebook', Icone: FacebookIcon },
+                    { nome: 'TikTok', Icone: TikTokIcon },
+                  ].map(({ nome, Icone }) => (
+                    <a
+                      key={nome}
+                      href="#"
+                      aria-label={nome}
+                      title={nome}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-choco-vermelho transition-colors hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-choco-vermelho"
+                    >
+                      <Icone width={22} height={22} />
+                    </a>
+                  ))}
                 </div>
               </div>
 

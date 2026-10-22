@@ -41,6 +41,18 @@ export default function RetornoPagamento({ tipo }) {
       }
 
       try {
+        const parametros = new URLSearchParams(window.location.search);
+        const idPagamentoMp = parametros.get('payment_id') || parametros.get('collection_id');
+
+        if (tipo === 'sucesso' && idPagamentoMp) {
+          // O backend confirma o status consultando a API do Mercado Pago.
+          await api(`/pedidos/${pedidoId}/pagamento/confirmar-retorno`, {
+            method: 'POST',
+            autenticado: true,
+            body: { id_pagamento_mp: idPagamentoMp },
+          });
+        }
+
         const dados = await api(`/pedidos/${pedidoId}`, { autenticado: true });
         if (!ativo) return;
         setPedido(dados);
@@ -87,7 +99,7 @@ export default function RetornoPagamento({ tipo }) {
             : estado === 'consultando'
               ? 'Consultando o pedido...'
               : estado === 'aguardando_confirmacao'
-                ? 'O pedido ainda está aguardando confirmação no sistema. A página de retorno, sozinha, não confirma o pagamento.'
+                ? 'O Mercado Pago ainda não confirmou a aprovação. Aguarde alguns instantes e consulte seus pedidos novamente.'
                 : estado === 'erro'
                   ? erro
                   : config.texto}
@@ -103,7 +115,7 @@ export default function RetornoPagamento({ tipo }) {
 
         {estado === 'aguardando_confirmacao' && (
           <p className="mt-4 text-sm text-[#775d5d]">
-            A confirmação automática via notificação do Mercado Pago ainda precisa ser implementada para atualizar o pedido no banco.
+            O Mercado Pago ainda não confirmou a aprovação. Aguarde alguns instantes e consulte seus pedidos novamente.
           </p>
         )}
 

@@ -40,7 +40,9 @@ export default function CardProduto({ produto, fundo, onAdicionar }) {
         <span className="text-sm font-extrabold text-choco-vermelho">{formatarPreco(produto.preco)}</span>
         <button
           type="button"
-          onClick={() => onAdicionar(produto)}
+          onClick={() => {
+            if (onAdicionar(produto) === false) window.location.href = '/login';
+          }}
           disabled={esgotado}
           aria-label={
             esgotado

@@ -73,9 +73,6 @@ const BANNERS_HOME = [
   },
 ];
 
-const PAPEL_RASGADO =
-  'polygon(0% 8%, 6% 2%, 12% 7%, 19% 1%, 27% 6%, 35% 0%, 44% 5%, 52% 1%, 61% 6%, 70% 0%, 79% 5%, 88% 1%, 100% 6%, 99% 30%, 100% 55%, 98% 80%, 100% 100%, 90% 96%, 80% 100%, 70% 95%, 60% 100%, 50% 96%, 40% 100%, 30% 95%, 20% 100%, 10% 96%, 0% 100%, 2% 70%, 0% 40%)';
-
 export default function Home() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -308,45 +305,15 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Nossa história */}
-        <section className="bg-choco-pessego">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 md:grid-cols-2">
-            <div>
-              <h2 className="text-xl font-extrabold uppercase tracking-wide">
-                Nossa história
-              </h2>
-
-              <p className="mt-4 max-w-md text-xl font-bold leading-snug text-choco-marrom sm:text-2xl">
-                Mais que chocolates, espalhamos felicidade e fazemos a
-                diferença!
-              </p>
-
-              <a
-                href="/sobre-nos"
-                className="mt-8 inline-flex items-center gap-2 rounded-md bg-choco-vermelho px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-choco-vinho"
-              >
-                Saiba mais
-                <ArrowRightIcon width={16} height={16} />
-              </a>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-md">
-              <div
-                className="absolute inset-0 rotate-2 bg-white"
-                style={{ clipPath: PAPEL_RASGADO }}
-                aria-hidden="true"
-              />
-
-              <div className="relative p-6">
-                <Imagem
-                  src={IMG_HISTORIA}
-                  alt="Banner sobre a história da Choco World"
-                  rotulo="Imagem da história"
-                  className="aspect-[4/3] w-full rounded-xl object-cover"
-                />
-              </div>
-            </div>
+        {/* Imagem institucional */}
+        <section className="bg-choco-creme px-4 py-12 sm:px-6">
+          <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl">
+            <Imagem
+              src={IMG_HISTORIA}
+              alt="Banner sobre a história da Choco World"
+              rotulo="Imagem da Choco World"
+              className="aspect-[16/8] w-full object-cover"
+            />
           </div>
         </section>
       </main>

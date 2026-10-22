@@ -242,14 +242,17 @@ function listarDoCliente(req, res, next) {
   try {
     const pedidos = db.prepare(`
       SELECT
-        id_pedido,
-        data_pedido,
-        status,
-        valor_total,
-        valor_frete
-      FROM pedido
-      WHERE id_cliente = ?
-      ORDER BY data_pedido DESC
+        p.id_pedido,
+        p.data_pedido,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        pg.status AS pagamento_status
+      FROM pedido p
+      LEFT JOIN pagamento pg
+        ON pg.id_pedido = p.id_pedido
+      WHERE p.id_cliente = ?
+      ORDER BY p.data_pedido DESC
     `).all(req.cliente.id_cliente);
 
     return res.json(pedidos);
@@ -272,15 +275,28 @@ function obterPorId(req, res, next) {
 
     const pedido = db.prepare(`
       SELECT
-        id_pedido,
-        id_cliente,
-        data_pedido,
-        status,
-        valor_total,
-        valor_frete,
-        id_endereco
-      FROM pedido
-      WHERE id_pedido = ?
+        p.id_pedido,
+        p.id_cliente,
+        p.data_pedido,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        e.cep AS endereco_cep,
+        e.logradouro AS endereco_logradouro,
+        e.numero AS endereco_numero,
+        e.complemento AS endereco_complemento,
+        e.bairro AS endereco_bairro,
+        e.cidade AS endereco_cidade,
+        e.estado AS endereco_estado,
+        pg.metodo AS pagamento_metodo,
+        pg.status AS pagamento_status
+      FROM pedido p
+      LEFT JOIN endereco e
+        ON e.id_endereco = p.id_endereco
+       AND e.id_cliente = p.id_cliente
+      LEFT JOIN pagamento pg
+        ON pg.id_pedido = p.id_pedido
+      WHERE p.id_pedido = ?
     `).get(id_pedido);
 
     if (!pedido) {

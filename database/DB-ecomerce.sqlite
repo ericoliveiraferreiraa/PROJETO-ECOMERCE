@@ -85,6 +85,7 @@ CREATE TABLE pedido (
     data_pedido     TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
     valor_total     INTEGER NOT NULL,
     status          TEXT NOT NULL,
+    estoque_baixado INTEGER NOT NULL DEFAULT 0 CHECK (estoque_baixado IN (0, 1)),
     FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente)
         ON UPDATE CASCADE
         ON DELETE RESTRICT

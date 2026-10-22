@@ -254,11 +254,12 @@ export default function Produtos() {
   }
 
   function adicionar(produto) {
-    adicionarAoCarrinho(produto);
+    if (!adicionarAoCarrinho(produto)) return false;
 
     setAviso(`${produto.nome} adicionado ao carrinho!`);
 
     window.setTimeout(() => setAviso(''), 2500);
+    return true;
   }
 
   return (

@@ -1,6 +1,6 @@
 
 const db = require('../../db');
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
 function obterClienteMercadoPago() {
   const accessToken = process.env.MP_ACCESS_TOKEN;
@@ -16,6 +16,187 @@ function obterClienteMercadoPago() {
   });
 
   return new Preference(client);
+}
+
+function obterConsultaPagamentosMercadoPago() {
+  const accessToken = process.env.MP_ACCESS_TOKEN;
+
+  if (!accessToken || accessToken === 'SEU_ACCESS_TOKEN_DE_TESTE') {
+    throw new Error('MP_ACCESS_TOKEN não configurado corretamente no arquivo .env.');
+  }
+
+  return new Payment(new MercadoPagoConfig({ accessToken }));
+}
+
+// Confirma o pagamento consultando o Mercado Pago, nunca pelos parâmetros
+// de status fornecidos pelo navegador.
+async function confirmarRetorno(req, res, next) {
+  try {
+    const idPedido = Number(req.params.id);
+    const idCliente = Number(req.cliente.id_cliente);
+    const idPagamentoMp = String(req.body?.id_pagamento_mp || '').trim();
+
+    if (!Number.isInteger(idPedido) || idPedido <= 0) {
+      return res.status(400).json({ erro: 'ID do pedido inválido.' });
+    }
+    if (!/^\d+$/.test(idPagamentoMp)) {
+      return res.status(400).json({ erro: 'ID do pagamento inválido.' });
+    }
+
+    const pedido = db.prepare(`
+      SELECT id_pedido, id_cliente, status, valor_total
+      FROM pedido
+      WHERE id_pedido = ? AND id_cliente = ?
+    `).get(idPedido, idCliente);
+
+    if (!pedido) {
+      return res.status(404).json({ erro: 'Pedido não encontrado.' });
+    }
+
+    const pagamentoLocal = db.prepare(`
+      SELECT id_preferencia, status, indentificador_transacao
+      FROM pagamento
+      WHERE id_pedido = ? AND metodo = 'mercado_pago'
+    `).get(idPedido);
+
+    if (!pagamentoLocal) {
+      return res.status(404).json({ erro: 'Pagamento do pedido não encontrado.' });
+    }
+
+    const pagamentoMp = await obterConsultaPagamentosMercadoPago().get({
+      id: idPagamentoMp,
+    });
+
+    if (String(pagamentoMp.external_reference) !== String(idPedido)) {
+      return res.status(409).json({ erro: 'O pagamento não corresponde a este pedido.' });
+    }
+    if (
+      pagamentoMp.currency_id !== 'BRL' ||
+      Math.round(Number(pagamentoMp.transaction_amount) * 100) !== Number(pedido.valor_total)
+    ) {
+      return res.status(409).json({ erro: 'O valor do pagamento não corresponde ao pedido.' });
+    }
+
+    if (pagamentoMp.status !== 'approved') {
+      return res.json({
+        id_pedido: idPedido,
+        pago: false,
+        status_mercado_pago: pagamentoMp.status,
+        status: pedido.status,
+      });
+    }
+
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      // Relê os registros sob bloqueio para impedir baixa dupla em retornos simultâneos.
+      const pedidoAtual = db.prepare(`
+        SELECT id_pedido, status, estoque_baixado
+        FROM pedido
+        WHERE id_pedido = ? AND id_cliente = ?
+      `).get(idPedido, idCliente);
+      const pagamentoAtual = db.prepare(`
+        SELECT status, indentificador_transacao
+        FROM pagamento
+        WHERE id_pedido = ? AND metodo = 'mercado_pago'
+      `).get(idPedido);
+
+      if (!pedidoAtual || !pagamentoAtual) {
+        const erro = new Error('Pedido ou pagamento não encontrado durante a confirmação.');
+        erro.statusCode = 404;
+        throw erro;
+      }
+
+      if (pedidoAtual.status !== 'aguardando_pagamento' && pedidoAtual.status !== 'pago') {
+        const erro = new Error('O pedido não pode ser confirmado no estado atual.');
+        erro.statusCode = 409;
+        erro.status = pedidoAtual.status;
+        throw erro;
+      }
+
+      const transacaoExistente = pagamentoAtual.indentificador_transacao;
+      if (
+        pagamentoAtual.status === 'aprovado' &&
+        transacaoExistente &&
+        String(transacaoExistente) !== String(pagamentoMp.id)
+      ) {
+        const erro = new Error('O pedido já possui outro pagamento aprovado.');
+        erro.statusCode = 409;
+        throw erro;
+      }
+
+      let estoqueBaixado = Number(pedidoAtual.estoque_baixado) === 1;
+      if (!estoqueBaixado) {
+        const itens = db.prepare(`
+          SELECT id_produto, SUM(quantidade) AS quantidade
+          FROM item_pedido
+          WHERE id_pedido = ?
+          GROUP BY id_produto
+        `).all(idPedido);
+
+        if (itens.length === 0) {
+          const erro = new Error('O pedido aprovado não possui itens para baixar do estoque.');
+          erro.statusCode = 409;
+          throw erro;
+        }
+
+        const baixarEstoque = db.prepare(`
+          UPDATE estoque
+          SET quantidade = quantidade - ?
+          WHERE id_produto = ? AND quantidade >= ?
+        `);
+
+        for (const item of itens) {
+          const quantidade = Number(item.quantidade);
+          const resultado = baixarEstoque.run(quantidade, item.id_produto, quantidade);
+          if (resultado.changes !== 1) {
+            const erro = new Error(
+              `Estoque insuficiente para o produto ${item.id_produto} na confirmação do pedido.`
+            );
+            erro.statusCode = 409;
+            erro.code = 'ESTOQUE_INSUFICIENTE';
+            throw erro;
+          }
+        }
+        estoqueBaixado = true;
+      }
+
+      db.prepare(`
+        UPDATE pagamento
+        SET status = 'aprovado', indentificador_transacao = ?, id_preferencia = ?
+        WHERE id_pedido = ? AND metodo = 'mercado_pago'
+      `).run(
+        String(pagamentoMp.id),
+        String(pagamentoMp.preference_id || pagamentoLocal.id_preferencia),
+        idPedido
+      );
+      db.prepare(`
+        UPDATE pedido
+        SET status = 'pago', estoque_baixado = ?
+        WHERE id_pedido = ?
+      `).run(estoqueBaixado ? 1 : 0, idPedido);
+      db.exec('COMMIT');
+    } catch (erroTransacao) {
+      db.exec('ROLLBACK');
+      if (erroTransacao.statusCode) {
+        return res.status(erroTransacao.statusCode).json({
+          erro: erroTransacao.message,
+          status: erroTransacao.status,
+          codigo: erroTransacao.code,
+          pagamento_aprovado: erroTransacao.code === 'ESTOQUE_INSUFICIENTE',
+        });
+      }
+      throw erroTransacao;
+    }
+    return res.json({
+      id_pedido: idPedido,
+      pago: true,
+      estoque_baixado: true,
+      status_mercado_pago: pagamentoMp.status,
+      status: 'pago',
+    });
+  } catch (erro) {
+    return next(erro);
+  }
 }
 
 // POST /pedidos/:id/pagamento
@@ -245,4 +426,5 @@ async function registrar(req, res, next) {
 
 module.exports = {
   registrar,
+  confirmarRetorno,
 };
