@@ -11,6 +11,7 @@ import MeusPedidos from './pages/MeusPedidos';
 import SobreNos from './pages/SobreNos';
 import Contato from './pages/Contato';
 import TicketPremiado from './pages/TicketPremiado';
+import Checkout from './pages/Checkout';
 
 import { encerrarSessao } from './services/sessao';
 
@@ -118,6 +119,9 @@ case '/contato':
 
 case '/ticket-premiado':
   return <TicketPremiado />;  
+  
+case '/checkout':
+  return <Checkout />;
 
     default:
       return <Home />;

@@ -1,199 +1,248 @@
 
 const db = require('../../db');
+const { MercadoPagoConfig, Preference } = require('mercadopago');
+
+function obterClienteMercadoPago() {
+  const accessToken = process.env.MP_ACCESS_TOKEN;
+
+  if (!accessToken) {
+    const erro = new Error(
+      'Configure MP_ACCESS_TOKEN no arquivo .env do backend.'
+    );
+    erro.status = 503;
+    throw erro;
+  }
+
+  return new Preference(
+    new MercadoPagoConfig({ accessToken })
+  );
+}
 
 // POST /pedidos/:id/pagamento
-// Pagamento simulado para fins academicos.
-// A baixa do estoque, o registro do pagamento e a atualizacao
-// do pedido acontecem na mesma transacao.
-function registrar(req, res, next) {
-  const { metodo } = req.body;
-  const id_pedido = Number(req.params.id);
-  const id_cliente = req.cliente.id_cliente;
-
-  const metodosPermitidos = ['pix', 'cartao', 'boleto'];
-
-  if (!metodosPermitidos.includes(metodo)) {
-    return res.status(400).json({
-      erro: 'Metodo invalido. Utilize pix, cartao ou boleto.',
-    });
-  }
-
-  if (!Number.isInteger(id_pedido) || id_pedido <= 0) {
-    return res.status(400).json({ erro: 'ID do pedido invalido.' });
-  }
-
-  const buscarPedido = db.prepare(`
-    SELECT id_pedido, id_cliente, valor_total, status
-    FROM pedido
-    WHERE id_pedido = ?
-  `);
-
-  const buscarItens = db.prepare(`
-    SELECT id_produto, quantidade
-    FROM item_pedido
-    WHERE id_pedido = ?
-  `);
-
-  const buscarEstoque = db.prepare(`
-    SELECT quantidade
-    FROM estoque
-    WHERE id_produto = ?
-  `);
-
-  const atualizarEstoque = db.prepare(`
-    UPDATE estoque
-    SET quantidade = quantidade - ?
-    WHERE id_produto = ?
-      AND quantidade >= ?
-  `);
-
-  const inserirPagamento = db.prepare(`
-    INSERT INTO pagamento (
-      id_pedido,
-      metodo,
-      status,
-      valor,
-      indentificador_transacao
-    )
-    VALUES (?, ?, 'aprovado', ?, ?)
-  `);
-
-  const atualizarPedido = db.prepare(`
-    UPDATE pedido
-    SET status = 'pago'
-    WHERE id_pedido = ?
-      AND status = 'aguardando_pagamento'
-  `);
-
-  let transacaoAberta = false;
-
+// Cria ou reutiliza uma preferência do Mercado Pago.
+// Não aprova o pedido nem reduz o estoque.
+async function registrar(req, res, next) {
   try {
-    db.exec('BEGIN IMMEDIATE');
-    transacaoAberta = true;
+    const idPedido = Number(req.params.id);
+    const idCliente = Number(req.cliente.id_cliente);
 
-    const pedido = buscarPedido.get(id_pedido);
+    if (!Number.isInteger(idPedido) || idPedido <= 0) {
+      return res.status(400).json({
+        erro: 'ID do pedido invalido.',
+      });
+    }
+
+    const pedido = db.prepare(`
+      SELECT
+        p.id_pedido,
+        p.id_cliente,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        c.email
+      FROM pedido p
+      JOIN cliente c ON c.id_cliente = p.id_cliente
+      WHERE p.id_pedido = ?
+    `).get(idPedido);
 
     if (!pedido) {
-      db.exec('ROLLBACK');
-      transacaoAberta = false;
-
       return res.status(404).json({
         erro: 'Pedido nao encontrado.',
       });
     }
 
-    if (pedido.id_cliente !== id_cliente) {
-      db.exec('ROLLBACK');
-      transacaoAberta = false;
-
+    if (Number(pedido.id_cliente) !== idCliente) {
       return res.status(403).json({
         erro: 'Este pedido nao pertence a voce.',
       });
     }
 
     if (pedido.status !== 'aguardando_pagamento') {
-      db.exec('ROLLBACK');
-      transacaoAberta = false;
-
       return res.status(409).json({
-        erro: `Pedido com status "${pedido.status}" nao pode ser pago novamente.`,
+        erro: `O pedido nao pode iniciar pagamento com status "${pedido.status}".`,
       });
     }
 
-    const itens = buscarItens.all(id_pedido);
+    if (!pedido.email) {
+      return res.status(400).json({
+        erro: 'O cliente precisa ter um e-mail cadastrado.',
+      });
+    }
 
-    if (itens.length === 0) {
-      db.exec('ROLLBACK');
-      transacaoAberta = false;
+    const itens = db.prepare(`
+      SELECT
+        ip.id_produto,
+        pr.nome,
+        ip.quantidade,
+        ip.preco_unitario,
+        ip.subtotal
+      FROM item_pedido ip
+      JOIN produto pr ON pr.id_produto = ip.id_produto
+      WHERE ip.id_pedido = ?
+    `).all(idPedido);
 
+    if (!itens.length) {
       return res.status(409).json({
         erro: 'O pedido nao possui itens.',
       });
     }
 
-    // Primeiro verifica o estoque de todos os itens.
-    // Nenhuma quantidade e reduzida nesta etapa.
-    for (const item of itens) {
-      if (!Number.isInteger(item.quantidade) || item.quantidade <= 0) {
-        throw new Error('O pedido possui uma quantidade invalida.');
-      }
-
-      const estoque = buscarEstoque.get(item.id_produto);
-
-      if (!estoque || estoque.quantidade < item.quantidade) {
-        db.exec('ROLLBACK');
-        transacaoAberta = false;
-
-        return res.status(409).json({
-          erro: `Estoque insuficiente para o produto ${item.id_produto}.`,
-          id_produto: item.id_produto,
-        });
-      }
-    }
-
-    // Depois reduz o estoque. A condicao protege contra
-    // uma quantidade insuficiente no momento da atualizacao.
-    for (const item of itens) {
-      const resultado = atualizarEstoque.run(
-        item.quantidade,
-        item.id_produto,
-        item.quantidade
-      );
-
-      if (Number(resultado.changes) !== 1) {
-        throw new Error(
-          `Nao foi possivel atualizar o estoque do produto ${item.id_produto}.`
-        );
-      }
-    }
-
-    // Identificador ficticio: nao representa uma transacao real.
-    const identificador = `SIMULADO-${Date.now()}`;
-
-    inserirPagamento.run(
-      id_pedido,
-      metodo,
-      pedido.valor_total,
-      identificador
+    const subtotal = itens.reduce(
+      (total, item) => total + Number(item.subtotal),
+      0
     );
 
-    const resultadoPedido = atualizarPedido.run(id_pedido);
+    const frete = Number(pedido.valor_frete);
+    const totalCalculado = subtotal + frete;
 
-    if (Number(resultadoPedido.changes) !== 1) {
-      throw new Error('Nao foi possivel atualizar o status do pedido.');
+    if (
+      !Number.isSafeInteger(totalCalculado) ||
+      totalCalculado !== Number(pedido.valor_total) ||
+      totalCalculado <= 0
+    ) {
+      return res.status(409).json({
+        erro: 'O total do pedido precisa ser conferido antes do pagamento.',
+      });
     }
 
-    db.exec('COMMIT');
-    transacaoAberta = false;
+    const pagamentoExistente = db.prepare(`
+      SELECT
+        id_pagamento,
+        metodo,
+        status,
+        id_preferencia,
+        url_checkout
+      FROM pagamento
+      WHERE id_pedido = ?
+    `).get(idPedido);
+
+    if (pagamentoExistente?.status === 'aprovado') {
+      return res.status(409).json({
+        erro: 'Este pedido ja possui pagamento aprovado.',
+      });
+    }
+
+    // Reutiliza a preferência se o checkout anterior ainda estiver pendente.
+    if (
+      pagamentoExistente?.status === 'pendente' &&
+      pagamentoExistente?.id_preferencia &&
+      pagamentoExistente?.url_checkout
+    ) {
+      return res.json({
+        id_pedido: idPedido,
+        status: 'aguardando_pagamento',
+        url_checkout: pagamentoExistente.url_checkout,
+      });
+    }
+
+    const preference = obterClienteMercadoPago();
+
+    const itensMercadoPago = itens.map((item) => ({
+      id: String(item.id_produto),
+      title: item.nome,
+      quantity: Number(item.quantidade),
+      currency_id: 'BRL',
+      unit_price: Number(
+        (Number(item.preco_unitario) / 100).toFixed(2)
+      ),
+    }));
+
+    if (frete > 0) {
+      itensMercadoPago.push({
+        id: `frete-${idPedido}`,
+        title: 'Frete de entrega',
+        quantity: 1,
+        currency_id: 'BRL',
+        unit_price: Number((frete / 100).toFixed(2)),
+      });
+    }
+
+    const frontendUrl = (
+      process.env.FRONTEND_URL || 'http://localhost:5173'
+    ).replace(/\/+$/, '');
+
+    const notificationUrl = process.env.MP_NOTIFICATION_URL;
+
+    const corpoPreferencia = {
+      items: itensMercadoPago,
+      payer: {
+        email: pedido.email,
+      },
+      external_reference: String(idPedido),
+      back_urls: {
+        success: `${frontendUrl}/pagamento/sucesso`,
+        pending: `${frontendUrl}/pagamento/pendente`,
+        failure: `${frontendUrl}/pagamento/falha`,
+      },
+    };
+
+    if (notificationUrl) {
+      corpoPreferencia.notification_url = notificationUrl;
+    }
+
+    const dadosPreferencia = await preference.create({
+      body: corpoPreferencia,
+    });
+
+    const urlCheckout =
+      dadosPreferencia.sandbox_init_point ||
+      dadosPreferencia.init_point;
+
+    if (!dadosPreferencia.id || !urlCheckout) {
+      throw new Error(
+        'O Mercado Pago nao retornou o identificador e a URL do checkout.'
+      );
+    }
+
+    if (pagamentoExistente) {
+      db.prepare(`
+        UPDATE pagamento
+        SET metodo = 'checkout_pro',
+            status = 'pendente',
+            valor = ?,
+            indentificador_transacao = NULL,
+            id_preferencia = ?,
+            url_checkout = ?
+        WHERE id_pedido = ?
+      `).run(
+        totalCalculado,
+        String(dadosPreferencia.id),
+        urlCheckout,
+        idPedido
+      );
+    } else {
+      db.prepare(`
+        INSERT INTO pagamento (
+          id_pedido,
+          metodo,
+          status,
+          valor,
+          indentificador_transacao,
+          id_preferencia,
+          url_checkout
+        )
+        VALUES (?, 'checkout_pro', 'pendente', ?, NULL, ?, ?)
+      `).run(
+        idPedido,
+        totalCalculado,
+        String(dadosPreferencia.id),
+        urlCheckout
+      );
+    }
 
     return res.status(201).json({
-      mensagem: 'Pagamento simulado aprovado.',
-      id_pedido,
-      status: 'pago',
-      identificador_transacao: identificador,
+      id_pedido: idPedido,
+      status: 'aguardando_pagamento',
+      url_checkout: urlCheckout,
     });
   } catch (err) {
-    if (transacaoAberta) {
-      try {
-        db.exec('ROLLBACK');
-      } catch (erroRollback) {
-        console.error('Erro ao reverter a transacao:', erroRollback);
-      }
+    if (err.status) {
+      return res.status(err.status).json({
+        erro: err.message,
+      });
     }
 
-    // Erros conhecidos de estoque sao tratados como conflito.
-    if (
-      err.message &&
-      (
-        err.message.includes('Estoque') ||
-        err.message.includes('estoque') ||
-        err.message.includes('quantidade insuficiente')
-      )
-    ) {
-      return res.status(409).json({ erro: err.message });
-    }
-
-    next(err);
+    return next(err);
   }
 }
 
