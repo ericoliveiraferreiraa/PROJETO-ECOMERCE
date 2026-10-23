@@ -6,9 +6,11 @@ function obterClienteMercadoPago() {
   const accessToken = process.env.MP_ACCESS_TOKEN;
 
   if (!accessToken || accessToken === 'SEU_ACCESS_TOKEN_DE_TESTE') {
-    throw new Error(
-      'MP_ACCESS_TOKEN não configurado corretamente no arquivo .env.'
+    const erro = new Error(
+      'Configure um token de acesso de teste do Mercado Pago em backend/.env (MP_ACCESS_TOKEN).'
     );
+    erro.status = 503;
+    throw erro;
   }
 
   const client = new MercadoPagoConfig({
@@ -22,7 +24,11 @@ function obterConsultaPagamentosMercadoPago() {
   const accessToken = process.env.MP_ACCESS_TOKEN;
 
   if (!accessToken || accessToken === 'SEU_ACCESS_TOKEN_DE_TESTE') {
-    throw new Error('MP_ACCESS_TOKEN não configurado corretamente no arquivo .env.');
+    const erro = new Error(
+      'Configure um token de acesso de teste do Mercado Pago em backend/.env (MP_ACCESS_TOKEN).'
+    );
+    erro.status = 503;
+    throw erro;
   }
 
   return new Payment(new MercadoPagoConfig({ accessToken }));

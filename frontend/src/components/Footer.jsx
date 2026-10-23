@@ -6,9 +6,8 @@ const LINKS_LOJA = [
   { rotulo: 'Ticket Premiado', href: '/ticket-premiado' },
 ];
 
-// Substitua os # pelos endereços oficiais quando os perfis estiverem definidos.
 const REDES = [
-  { rotulo: 'Instagram', href: '#', Icone: InstagramIcon },
+  { rotulo: 'Instagram', href: 'https://www.instagram.com/worldchoco93/', Icone: InstagramIcon },
   { rotulo: 'Facebook', href: '#', Icone: FacebookIcon },
   { rotulo: 'TikTok', href: '#', Icone: TikTokIcon },
 ];

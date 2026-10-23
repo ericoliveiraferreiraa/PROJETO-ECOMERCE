@@ -168,9 +168,9 @@ export default function Home() {
         {/* Carrossel institucional */}
         <section
           aria-label="Destaques da Choco World"
-          className="bg-choco-creme px-4 pb-8 pt-8 sm:px-6"
+          className="bg-choco-creme px-2 pb-8 pt-8 sm:px-3"
         >
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto w-full max-w-[90rem]">
             <div className="relative overflow-hidden rounded-2xl bg-choco-vinho shadow-lg">
               {/* Altura FIXA: o card nao muda de tamanho de um banner para o outro */}
               <div className="grid h-[36rem] grid-rows-[1fr_13rem] md:h-[380px] md:grid-cols-2 md:grid-rows-1">

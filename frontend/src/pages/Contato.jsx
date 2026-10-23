@@ -122,13 +122,13 @@ export default function Contato() {
                 <h3 className="text-sm font-bold">Redes sociais</h3>
                 <div className="mt-3 flex gap-3">
                   {[
-                    { nome: 'Instagram', Icone: InstagramIcon },
+                    { nome: 'Instagram', href: 'https://www.instagram.com/worldchoco93/', Icone: InstagramIcon },
                     { nome: 'Facebook', Icone: FacebookIcon },
                     { nome: 'TikTok', Icone: TikTokIcon },
-                  ].map(({ nome, Icone }) => (
+                  ].map(({ nome, href = '#', Icone }) => (
                     <a
                       key={nome}
-                      href="#"
+                      href={href}
                       aria-label={nome}
                       title={nome}
                       className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-choco-vermelho transition-colors hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-choco-vermelho"
