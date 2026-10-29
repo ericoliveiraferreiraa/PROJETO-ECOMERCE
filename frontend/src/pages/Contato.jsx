@@ -3,6 +3,10 @@ import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Imagem from '../components/Imagem';
+<<<<<<< HEAD
+=======
+import { InstagramIcon, FacebookIcon, TikTokIcon } from '../components/icons';
+>>>>>>> pagamento
 
 const IMG_CONTATO = '/banner-fabrica.jpg';
 
@@ -119,6 +123,7 @@ export default function Contato() {
 
               <div className="mt-7 border-t border-choco-pessego/50 pt-5">
                 <h3 className="text-sm font-bold">Redes sociais</h3>
+<<<<<<< HEAD
 
                 <div className="mt-3 flex gap-3">
                   <a
@@ -144,6 +149,24 @@ export default function Contato() {
                   >
                     ♪
                   </a>
+=======
+                <div className="mt-3 flex gap-3">
+                  {[
+                    { nome: 'Instagram', href: 'https://www.instagram.com/worldchoco93/', Icone: InstagramIcon },
+                    { nome: 'Facebook', Icone: FacebookIcon },
+                    { nome: 'TikTok', Icone: TikTokIcon },
+                  ].map(({ nome, href = '#', Icone }) => (
+                    <a
+                      key={nome}
+                      href={href}
+                      aria-label={nome}
+                      title={nome}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-choco-vermelho transition-colors hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-choco-vermelho"
+                    >
+                      <Icone width={22} height={22} />
+                    </a>
+                  ))}
+>>>>>>> pagamento
                 </div>
               </div>
 

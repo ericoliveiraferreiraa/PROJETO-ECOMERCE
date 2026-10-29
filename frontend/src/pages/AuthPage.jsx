@@ -27,9 +27,22 @@ export default function AuthPage({ tipo = 'login' }) {
   const [carregando, setCarregando] = useState(false);
 
   function atualizar(evento) {
+<<<<<<< HEAD
     setDados({
       ...dados,
       [evento.target.name]: evento.target.value,
+=======
+    const { name, value } = evento.target;
+    const valor = name === 'nome'
+      ? value.replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR')
+      : name === 'cpf' || name === 'telefone'
+        ? value.replace(/\D/g, '').slice(0, 11)
+        : value;
+
+    setDados({
+      ...dados,
+      [name]: valor,
+>>>>>>> pagamento
     });
   }
 
@@ -43,6 +56,20 @@ export default function AuthPage({ tipo = 'login' }) {
       return;
     }
 
+<<<<<<< HEAD
+=======
+    if (cadastro && dados.cpf.replace(/\D/g, '').length !== 11) {
+      setErro('O CPF deve conter exatamente 11 dígitos.');
+      return;
+    }
+
+    const telefoneLimpo = dados.telefone.replace(/\D/g, '');
+    if (cadastro && telefoneLimpo.length !== 10 && telefoneLimpo.length !== 11) {
+      setErro('Informe o telefone com DDD e número (10 ou 11 dígitos).');
+      return;
+    }
+
+>>>>>>> pagamento
     setCarregando(true);
 
     try {
@@ -50,7 +77,11 @@ export default function AuthPage({ tipo = 'login' }) {
         await api('/clientes', {
           metodo: 'POST',
           corpo: {
+<<<<<<< HEAD
             nome: dados.nome.trim(),
+=======
+            nome: dados.nome.trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR'),
+>>>>>>> pagamento
             cpf: dados.cpf.replace(/\D/g, ''),
             email: dados.email.trim(),
             telefone: dados.telefone.replace(/\D/g, ''),
@@ -212,6 +243,10 @@ export default function AuthPage({ tipo = 'login' }) {
                         value={dados.cpf}
                         onChange={atualizar}
                         inputMode="numeric"
+<<<<<<< HEAD
+=======
+                        maxLength={11}
+>>>>>>> pagamento
                         placeholder="Seu CPF"
                         required
                       />
@@ -227,6 +262,10 @@ export default function AuthPage({ tipo = 'login' }) {
                         onChange={atualizar}
                         autoComplete="tel"
                         inputMode="tel"
+<<<<<<< HEAD
+=======
+                        maxLength={11}
+>>>>>>> pagamento
                         placeholder="DDD + número"
                         required
                       />
@@ -333,4 +372,8 @@ export default function AuthPage({ tipo = 'login' }) {
       </footer>
     </main>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> pagamento

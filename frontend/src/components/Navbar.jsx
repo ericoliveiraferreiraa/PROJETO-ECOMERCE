@@ -8,6 +8,10 @@ import {
   encerrarSessao,
   ouvirSessaoAtualizada,
 } from '../services/sessao';
+<<<<<<< HEAD
+=======
+import { limparCarrinho } from '../services/carrinho';
+>>>>>>> pagamento
 
 const LINKS = [
   { rotulo: 'Produtos', href: '/produtos' },
@@ -16,12 +20,20 @@ const LINKS = [
 ];
 
 export default function Navbar() {
+<<<<<<< HEAD
   const [itens, setItens] = useState(totalItensCarrinho);
+=======
+  const [itens, setItens] = useState(0);
+>>>>>>> pagamento
   const [usuario, setUsuario] = useState(null);
   const [menuConta, setMenuConta] = useState(false);
 
   useEffect(() => {
+<<<<<<< HEAD
     const atualizarCarrinho = () => setItens(totalItensCarrinho());
+=======
+    const atualizarCarrinho = () => setItens(usuario ? totalItensCarrinho() : 0);
+>>>>>>> pagamento
 
     window.addEventListener('carrinho:atualizado', atualizarCarrinho);
     window.addEventListener('storage', atualizarCarrinho);
@@ -30,7 +42,11 @@ export default function Navbar() {
       window.removeEventListener('carrinho:atualizado', atualizarCarrinho);
       window.removeEventListener('storage', atualizarCarrinho);
     };
+<<<<<<< HEAD
   }, []);
+=======
+  }, [usuario]);
+>>>>>>> pagamento
 
   useEffect(() => {
     let ativo = true;
@@ -40,6 +56,11 @@ export default function Navbar() {
 
       if (ativo) {
         setUsuario(dados);
+<<<<<<< HEAD
+=======
+        setItens(dados ? totalItensCarrinho() : 0);
+        if (!dados) limparCarrinho();
+>>>>>>> pagamento
       }
     }
 
@@ -163,6 +184,7 @@ export default function Navbar() {
 
           <a
             href="/carrinho"
+<<<<<<< HEAD
             aria-label={`Carrinho, ${itens} ${itens === 1 ? 'item' : 'itens'}`}
             className="relative p-1"
           >
@@ -170,9 +192,26 @@ export default function Navbar() {
             <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-choco-vermelho px-1 text-[10px] font-bold leading-none text-white">
               {itens}
             </span>
+=======
+            aria-label={usuario
+              ? `Carrinho, ${itens} ${itens === 1 ? 'item' : 'itens'}`
+              : 'Carrinho'}
+            className="relative p-1"
+          >
+            <CartIcon width={18} height={18} />
+            {usuario && itens > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-choco-vermelho px-1 text-[10px] font-bold leading-none text-white">
+                {itens}
+              </span>
+            )}
+>>>>>>> pagamento
           </a>
         </div>
       </nav>
     </header>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> pagamento

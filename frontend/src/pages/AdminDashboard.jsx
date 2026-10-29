@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
+<<<<<<< HEAD
 import { api, sair } from '../services/api';
+=======
+import { api } from '../services/api';
+import { encerrarSessao } from '../services/sessao';
+>>>>>>> pagamento
 import { formatarPreco } from '../utils/moeda';
 
 
@@ -257,8 +262,12 @@ function AdminDashboard() {
   }
 
   function fazerLogout() {
+<<<<<<< HEAD
     sair();
     localStorage.removeItem('tipoUsuario');
+=======
+    encerrarSessao();
+>>>>>>> pagamento
     window.location.href = '/';
   }
 

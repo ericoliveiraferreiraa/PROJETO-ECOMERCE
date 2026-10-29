@@ -73,9 +73,12 @@ const BANNERS_HOME = [
   },
 ];
 
+<<<<<<< HEAD
 const PAPEL_RASGADO =
   'polygon(0% 8%, 6% 2%, 12% 7%, 19% 1%, 27% 6%, 35% 0%, 44% 5%, 52% 1%, 61% 6%, 70% 0%, 79% 5%, 88% 1%, 100% 6%, 99% 30%, 100% 55%, 98% 80%, 100% 100%, 90% 96%, 80% 100%, 70% 95%, 60% 100%, 50% 96%, 40% 100%, 30% 95%, 20% 100%, 10% 96%, 0% 100%, 2% 70%, 0% 40%)';
 
+=======
+>>>>>>> pagamento
 export default function Home() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -171,9 +174,15 @@ export default function Home() {
         {/* Carrossel institucional */}
         <section
           aria-label="Destaques da Choco World"
+<<<<<<< HEAD
           className="bg-choco-creme px-4 pb-8 pt-8 sm:px-6"
         >
           <div className="mx-auto max-w-6xl">
+=======
+          className="bg-choco-creme px-2 pb-8 pt-8 sm:px-3"
+        >
+          <div className="mx-auto w-full max-w-[90rem]">
+>>>>>>> pagamento
             <div className="relative overflow-hidden rounded-2xl bg-choco-vinho shadow-lg">
               {/* Altura FIXA: o card nao muda de tamanho de um banner para o outro */}
               <div className="grid h-[36rem] grid-rows-[1fr_13rem] md:h-[380px] md:grid-cols-2 md:grid-rows-1">
@@ -308,6 +317,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+<<<<<<< HEAD
 
         {/* Nossa história */}
         <section className="bg-choco-pessego">
@@ -347,6 +357,17 @@ export default function Home() {
                 />
               </div>
             </div>
+=======
+        {/* Imagem institucional */}
+        <section className="bg-choco-creme px-4 py-12 sm:px-6">
+          <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl">
+            <Imagem
+              src={IMG_HISTORIA}
+              alt="Banner sobre a história da Choco World"
+              rotulo="Imagem da Choco World"
+              className="aspect-[16/8] w-full object-cover"
+            />
+>>>>>>> pagamento
           </div>
         </section>
       </main>
@@ -354,4 +375,8 @@ export default function Home() {
       <Footer />
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> pagamento

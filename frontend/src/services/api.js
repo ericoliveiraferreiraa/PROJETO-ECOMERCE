@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 const API_URL = 'http://localhost:4000';
+=======
+// Em desenvolvimento, o Vite encaminha /api para o backend local.
+// Isso mantém as chamadas de API no mesmo domínio quando o frontend é
+// acessado por um túnel público.
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+>>>>>>> pagamento
 
 export function getToken() {
 return localStorage.getItem('token');

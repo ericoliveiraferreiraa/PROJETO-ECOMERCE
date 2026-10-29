@@ -254,11 +254,19 @@ export default function Produtos() {
   }
 
   function adicionar(produto) {
+<<<<<<< HEAD
     adicionarAoCarrinho(produto);
+=======
+    if (!adicionarAoCarrinho(produto)) return false;
+>>>>>>> pagamento
 
     setAviso(`${produto.nome} adicionado ao carrinho!`);
 
     window.setTimeout(() => setAviso(''), 2500);
+<<<<<<< HEAD
+=======
+    return true;
+>>>>>>> pagamento
   }
 
   return (
@@ -474,4 +482,8 @@ export default function Produtos() {
       <Footer />
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> pagamento

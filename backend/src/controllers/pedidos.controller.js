@@ -1,5 +1,6 @@
 
 const db = require('../../db');
+<<<<<<< HEAD
 
 // POST /pedidos
 // Cria um pedido sem baixar o estoque.
@@ -7,6 +8,16 @@ const db = require('../../db');
 function criar(req, res, next) {
   const { itens } = req.body;
   const id_cliente = req.cliente.id_cliente;
+=======
+const { calcularFrete } = require('../services/frete');
+
+// POST /pedidos
+// Cria um pedido com endereco e frete validados.
+// O estoque nao e reduzido nesta etapa.
+function criar(req, res, next) {
+  const { itens, id_endereco } = req.body;
+  const id_cliente = Number(req.cliente.id_cliente);
+>>>>>>> pagamento
 
   if (!Array.isArray(itens) || itens.length === 0) {
     return res.status(400).json({
@@ -14,6 +25,23 @@ function criar(req, res, next) {
     });
   }
 
+<<<<<<< HEAD
+=======
+  const idEndereco = Number(id_endereco);
+
+  if (!Number.isInteger(idEndereco) || idEndereco <= 0) {
+    return res.status(400).json({
+      erro: 'Selecione um endereco de entrega valido.',
+    });
+  }
+
+  if (!Number.isInteger(id_cliente) || id_cliente <= 0) {
+    return res.status(401).json({
+      erro: 'Cliente autenticado invalido.',
+    });
+  }
+
+>>>>>>> pagamento
   // Valida e consolida produtos repetidos no carrinho.
   const quantidadesPorProduto = new Map();
 
@@ -45,10 +73,25 @@ function criar(req, res, next) {
     quantidadesPorProduto.set(id_produto, quantidadeAcumulada);
   }
 
+<<<<<<< HEAD
   const buscarProduto = db.prepare(`
     SELECT id_produto, nome, preco
     FROM produto
     WHERE id_produto = ? AND ativo = 1
+=======
+  const buscarEndereco = db.prepare(`
+    SELECT id_endereco, cep
+    FROM endereco
+    WHERE id_endereco = ?
+      AND id_cliente = ?
+  `);
+
+  const buscarProduto = db.prepare(`
+    SELECT id_produto, nome, preco
+    FROM produto
+    WHERE id_produto = ?
+      AND ativo = 1
+>>>>>>> pagamento
   `);
 
   const buscarEstoque = db.prepare(`
@@ -58,8 +101,19 @@ function criar(req, res, next) {
   `);
 
   const inserirPedido = db.prepare(`
+<<<<<<< HEAD
     INSERT INTO pedido (id_cliente, valor_total, status)
     VALUES (?, ?, 'aguardando_pagamento')
+=======
+    INSERT INTO pedido (
+      id_cliente,
+      valor_total,
+      status,
+      id_endereco,
+      valor_frete
+    )
+    VALUES (?, ?, 'aguardando_pagamento', ?, ?)
+>>>>>>> pagamento
   `);
 
   const inserirItem = db.prepare(`
@@ -76,6 +130,7 @@ function criar(req, res, next) {
   let transacaoAberta = false;
 
   try {
+<<<<<<< HEAD
     // Impede que outra escrita altere o estoque entre a verificacao
     // e a criacao do pedido. O estoque ainda nao sera reduzido.
     db.exec('BEGIN IMMEDIATE');
@@ -83,6 +138,28 @@ function criar(req, res, next) {
 
     const itensValidados = [];
     let valorTotal = 0;
+=======
+    db.exec('BEGIN IMMEDIATE');
+    transacaoAberta = true;
+
+    // Impede que um cliente utilize o endereco de outra pessoa.
+    const endereco = buscarEndereco.get(idEndereco, id_cliente);
+
+    if (!endereco) {
+      db.exec('ROLLBACK');
+      transacaoAberta = false;
+
+      return res.status(400).json({
+        erro: 'Endereco nao encontrado ou nao pertence ao cliente.',
+      });
+    }
+
+    // O frete e calculado pelo backend, nunca pelo navegador.
+    const frete = calcularFrete(endereco.cep);
+
+    const itensValidados = [];
+    let subtotalProdutos = 0;
+>>>>>>> pagamento
 
     for (const [id_produto, quantidade] of quantidadesPorProduto) {
       const produto = buscarProduto.get(id_produto);
@@ -115,10 +192,17 @@ function criar(req, res, next) {
         throw erro;
       }
 
+<<<<<<< HEAD
       valorTotal += subtotal;
 
       if (!Number.isSafeInteger(valorTotal)) {
         const erro = new Error('O valor total do pedido e invalido.');
+=======
+      subtotalProdutos += subtotal;
+
+      if (!Number.isSafeInteger(subtotalProdutos)) {
+        const erro = new Error('O subtotal dos produtos e invalido.');
+>>>>>>> pagamento
         erro.statusCode = 400;
         throw erro;
       }
@@ -131,7 +215,28 @@ function criar(req, res, next) {
       });
     }
 
+<<<<<<< HEAD
     const resultadoPedido = inserirPedido.run(id_cliente, valorTotal);
+=======
+    const valorTotal = subtotalProdutos + frete.valor_frete;
+
+    if (
+      !Number.isSafeInteger(valorTotal) ||
+      valorTotal <= 0
+    ) {
+      const erro = new Error('O valor total do pedido e invalido.');
+      erro.statusCode = 400;
+      throw erro;
+    }
+
+    const resultadoPedido = inserirPedido.run(
+      id_cliente,
+      valorTotal,
+      idEndereco,
+      frete.valor_frete
+    );
+
+>>>>>>> pagamento
     const id_pedido = Number(resultadoPedido.lastInsertRowid);
 
     for (const item of itensValidados) {
@@ -149,6 +254,12 @@ function criar(req, res, next) {
 
     return res.status(201).json({
       id_pedido,
+<<<<<<< HEAD
+=======
+      id_endereco: idEndereco,
+      subtotal_produtos: subtotalProdutos,
+      valor_frete: frete.valor_frete,
+>>>>>>> pagamento
       valor_total: valorTotal,
       status: 'aguardando_pagamento',
     });
@@ -157,7 +268,14 @@ function criar(req, res, next) {
       try {
         db.exec('ROLLBACK');
       } catch (erroRollback) {
+<<<<<<< HEAD
         console.error('Erro ao reverter a transacao:', erroRollback);
+=======
+        console.error(
+          'Erro ao reverter a transacao:',
+          erroRollback
+        );
+>>>>>>> pagamento
       }
     }
 
@@ -176,10 +294,25 @@ function criar(req, res, next) {
 function listarDoCliente(req, res, next) {
   try {
     const pedidos = db.prepare(`
+<<<<<<< HEAD
       SELECT id_pedido, data_pedido, status, valor_total
       FROM pedido
       WHERE id_cliente = ?
       ORDER BY data_pedido DESC
+=======
+      SELECT
+        p.id_pedido,
+        p.data_pedido,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        pg.status AS pagamento_status
+      FROM pedido p
+      LEFT JOIN pagamento pg
+        ON pg.id_pedido = p.id_pedido
+      WHERE p.id_cliente = ?
+      ORDER BY p.data_pedido DESC
+>>>>>>> pagamento
     `).all(req.cliente.id_cliente);
 
     return res.json(pedidos);
@@ -201,9 +334,35 @@ function obterPorId(req, res, next) {
     }
 
     const pedido = db.prepare(`
+<<<<<<< HEAD
       SELECT id_pedido, id_cliente, data_pedido, status, valor_total
       FROM pedido
       WHERE id_pedido = ?
+=======
+      SELECT
+        p.id_pedido,
+        p.id_cliente,
+        p.data_pedido,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        e.cep AS endereco_cep,
+        e.logradouro AS endereco_logradouro,
+        e.numero AS endereco_numero,
+        e.complemento AS endereco_complemento,
+        e.bairro AS endereco_bairro,
+        e.cidade AS endereco_cidade,
+        e.estado AS endereco_estado,
+        pg.metodo AS pagamento_metodo,
+        pg.status AS pagamento_status
+      FROM pedido p
+      LEFT JOIN endereco e
+        ON e.id_endereco = p.id_endereco
+       AND e.id_cliente = p.id_cliente
+      LEFT JOIN pagamento pg
+        ON pg.id_pedido = p.id_pedido
+      WHERE p.id_pedido = ?
+>>>>>>> pagamento
     `).get(id_pedido);
 
     if (!pedido) {
@@ -212,7 +371,14 @@ function obterPorId(req, res, next) {
       });
     }
 
+<<<<<<< HEAD
     if (Number(pedido.id_cliente) !== Number(req.cliente.id_cliente)) {
+=======
+    if (
+      Number(pedido.id_cliente) !==
+      Number(req.cliente.id_cliente)
+    ) {
+>>>>>>> pagamento
       return res.status(403).json({
         erro: 'Este pedido nao pertence a voce.',
       });
@@ -226,7 +392,12 @@ function obterPorId(req, res, next) {
         ip.preco_unitario,
         ip.subtotal
       FROM item_pedido ip
+<<<<<<< HEAD
       JOIN produto pr ON pr.id_produto = ip.id_produto
+=======
+      JOIN produto pr
+        ON pr.id_produto = ip.id_produto
+>>>>>>> pagamento
       WHERE ip.id_pedido = ?
     `).all(pedido.id_pedido);
 
@@ -240,4 +411,8 @@ module.exports = {
   criar,
   listarDoCliente,
   obterPorId,
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> pagamento

@@ -11,5 +11,9 @@ router.post('/', pedidosController.criar);
 router.get('/', pedidosController.listarDoCliente);
 router.get('/:id', pedidosController.obterPorId);
 router.post('/:id/pagamento', pagamentosController.registrar);
+<<<<<<< HEAD
+=======
+router.post('/:id/pagamento/confirmar-retorno', pagamentosController.confirmarRetorno);
+>>>>>>> pagamento
 
 module.exports = router;
