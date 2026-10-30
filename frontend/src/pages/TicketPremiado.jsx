@@ -107,10 +107,14 @@ export default function TicketPremiado() {
             </h2>
 
             <p className="mt-3 leading-relaxed text-choco-marrom/80">
-              Esta página apresenta o conceito visual do Ticket Premiado.
-              A campanha ainda precisa ter suas condições, período de
-              participação, critérios de premiação e procedimento de
-              resgate formalizados antes de ser anunciada como ativa.
+              Na proposta acadêmica do Ticket Dourado, quem encontrar o ticket
+              conhecerá a fábrica da Choco World e ganhará um prêmio no valor
+              de R$ 100.000. Esta é apenas uma simulação: a campanha não está
+              ativa. Uma promoção real depende de regulamento oficial e
+              autorização prévia. A legislação brasileira não permite oferecer
+              prêmios em dinheiro em promoções comerciais, então o formato do
+              prêmio precisaria ser adequado às regras vigentes antes de qualquer
+              divulgação.
             </p>
           </div>
 

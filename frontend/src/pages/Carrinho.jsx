@@ -3,24 +3,41 @@ import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { formatarPreco } from '../utils/moeda';
+import { api } from '../services/api';
 import {
   lerCarrinho,
   atualizarQuantidade,
   removerDoCarrinho,
+  sincronizarEstoqueDoCarrinho,
 } from '../services/carrinho';
 
 export default function Carrinho() {
   const [itens, setItens] = useState([]);
+  const [validandoEstoque, setValidandoEstoque] = useState(true);
 
   useEffect(() => {
+    let ativo = true;
+
     function sincronizar() {
       setItens(lerCarrinho());
     }
 
     sincronizar();
+    api('/produtos')
+      .then((produtos) => {
+        if (ativo && Array.isArray(produtos)) {
+          setItens(sincronizarEstoqueDoCarrinho(produtos));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (ativo) setValidandoEstoque(false);
+      });
+
     window.addEventListener('carrinho:atualizado', sincronizar);
 
     return () => {
+      ativo = false;
       window.removeEventListener('carrinho:atualizado', sincronizar);
     };
   }, []);
@@ -33,6 +50,12 @@ export default function Carrinho() {
   // Frete ilustrativo fixo por enquanto; será calculado pelo CEP no checkout.
   const frete = itens.length > 0 ? 1290 : 0;
   const total = subtotal + frete;
+  const possuiItemSemEstoque = itens.some(
+    (item) =>
+      item.estoque !== null &&
+      item.estoque !== undefined &&
+      (Number(item.estoque) <= 0 || item.quantidade > Number(item.estoque))
+  );
 
   function alterarQuantidade(item, quantidade) {
     atualizarQuantidade(item.id_produto, quantidade);
@@ -102,7 +125,7 @@ export default function Carrinho() {
                     className="grid grid-cols-1 items-center gap-4 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_110px_140px_110px_35px] md:gap-4"
                   >
                     <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-choco-creme p-2">
+                      <div className="flex h-20 w-[3.75rem] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8f0d3]">
                         {item.imagem ? (
                           <img
                             src={item.imagem}
@@ -118,6 +141,11 @@ export default function Carrinho() {
                         <p className="mt-1 text-xs text-neutral-500">
                           Produto Choco World
                         </p>
+                        {item.estoque === 0 && (
+                          <p className="mt-1 text-xs font-semibold text-choco-vermelho">
+                            Produto indisponível no momento
+                          </p>
+                        )}
                         <button
                           type="button"
                           onClick={() => remover(item)}
@@ -155,8 +183,13 @@ export default function Carrinho() {
                         <button
                           type="button"
                           onClick={() => alterarQuantidade(item, item.quantidade + 1)}
+                          disabled={
+                            item.estoque !== null &&
+                            item.estoque !== undefined &&
+                            item.quantidade >= Number(item.estoque)
+                          }
                           aria-label={`Aumentar quantidade de ${item.nome}`}
-                          className="px-3 py-2 hover:bg-choco-creme"
+                          className="px-3 py-2 hover:bg-choco-creme disabled:cursor-not-allowed disabled:opacity-30"
                         >
                           +
                         </button>
@@ -229,7 +262,8 @@ export default function Carrinho() {
                   onClick={() => {
                     window.location.href = '/checkout';
                   }}
-                  className="mt-6 w-full rounded-lg bg-choco-vinho px-5 py-3 text-sm font-bold text-white transition hover:bg-choco-vinho-claro"
+                  disabled={validandoEstoque || possuiItemSemEstoque}
+                  className="mt-6 w-full rounded-lg bg-choco-vinho px-5 py-3 text-sm font-bold text-white transition hover:bg-choco-vinho-claro disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Finalizar compra →
                 </button>

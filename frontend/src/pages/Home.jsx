@@ -131,40 +131,6 @@ export default function Home() {
       <Navbar />
 
       <main>
-        {/* Hero principal */}
-        <section className="bg-gradient-to-b from-choco-vinho to-choco-vinho-claro text-white">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-24 pt-10 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:pb-28 lg:pt-14">
-            <div>
-    
-              <h1 className="mt-4 max-w-xl text-3xl font-extrabold leading-tight sm:text-4xl">
-                O mundo do chocolate, doces e snacks em um só lugar!
-              </h1>
-
-              <p className="mt-4 max-w-lg text-lg font-semibold leading-snug">
-                Sabor, variedade e qualidade para todas as idades. E o
-                melhor, você também faz o bem!
-              </p>
-
-              <a
-                href="/produtos"
-                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-bold uppercase tracking-wide text-choco-marrom shadow-md transition-colors hover:bg-choco-creme"
-              >
-                Ver produtos
-                <ArrowRightIcon width={16} height={16} />
-              </a>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl">
-              <Imagem
-                src={IMG_HERO}
-                alt="Chocolates variados da Choco World"
-                rotulo="Imagem principal"
-                className="aspect-[16/10] w-full object-cover"
-              />
-            </div>
-          </div>
-        </section>
-
         {/* Carrossel institucional */}
         <section
           aria-label="Destaques da Choco World"
@@ -305,6 +271,39 @@ export default function Home() {
             </div>
           </div>
         </section>
+        {/* Hero principal */}
+        <section className="bg-gradient-to-b from-choco-vinho to-choco-vinho-claro text-white">
+          <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-24 pt-10 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:pb-28 lg:pt-14">
+            <div>
+              <h1 className="mt-4 max-w-xl text-3xl font-extrabold leading-tight sm:text-4xl">
+                O mundo do chocolate, doces e snacks em um só lugar!
+              </h1>
+
+              <p className="mt-4 max-w-lg text-lg font-semibold leading-snug">
+                Sabor, variedade e qualidade para todas as idades. E o
+                melhor, você também faz o bem!
+              </p>
+
+              <a
+                href="/produtos"
+                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-bold uppercase tracking-wide text-choco-marrom shadow-md transition-colors hover:bg-choco-creme"
+              >
+                Ver produtos
+                <ArrowRightIcon width={16} height={16} />
+              </a>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl">
+              <Imagem
+                src={IMG_HERO}
+                alt="Chocolates variados da Choco World"
+                rotulo="Imagem principal"
+                className="aspect-[16/10] w-full object-cover"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Imagem institucional */}
         <section className="bg-choco-creme px-4 py-12 sm:px-6">
           <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl">

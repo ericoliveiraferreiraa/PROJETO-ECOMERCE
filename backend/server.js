@@ -18,6 +18,7 @@ app.use(express.json());
 
 app.use("/produtos", produtosRoutes);
 app.use("/clientes", clientesRoutes);
+app.use("/auth", require("./src/routes/autenticacao.routes"));
 app.use("/pedidos", pedidosRoutes);
 app.use("/categorias", categoriasRoutes);
 app.use("/enderecos", enderecosRoutes);

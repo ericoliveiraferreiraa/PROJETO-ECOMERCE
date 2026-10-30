@@ -25,6 +25,19 @@ export default function App() {
   const caminho = window.location.pathname;
 
   useEffect(() => {
+    if (caminho === '/admin/login') {
+      window.location.replace('/login');
+      return;
+    }
+
+    if (
+      caminho === '/admin' &&
+      (!localStorage.getItem('token') ||
+        localStorage.getItem('tipoUsuario') !== 'admin')
+    ) {
+      window.location.replace('/login');
+      return;
+    }
     // O temporizador é exclusivo da sessão do cliente.
     const token = localStorage.getItem('token');
     const tipoUsuario = localStorage.getItem('tipoUsuario');
@@ -88,6 +101,15 @@ export default function App() {
     };
   }, [caminho]);
 
+  if (
+    caminho === '/admin/login' ||
+    (caminho === '/admin' &&
+      (!localStorage.getItem('token') ||
+        localStorage.getItem('tipoUsuario') !== 'admin'))
+  ) {
+    return null;
+  }
+
   switch (caminho) {
     case '/':
       return <Home />;
@@ -120,9 +142,6 @@ export default function App() {
     case '/redefinir-senha':
       return <RecuperarSenha />;
 
-    case '/admin/login':
-      return <AuthPage tipo="admin" />;
-
     case '/admin':
       return <AdminDashboard />;
 
@@ -142,6 +161,7 @@ case '/ticket-premiado':
   return <TicketPremiado />;  
 
     case '/erro':
+    case '/500':
       return <PaginaErro codigo={500} />;
 
     default:

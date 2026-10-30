@@ -698,7 +698,7 @@ async function continuarParaPagamento() {
                     key={item.id_produto}
                     className="flex items-start gap-3"
                   >
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#fff6f0]">
+                    <div className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8f0d3]">
                       {item.imagem ? (
                         <img
                           src={item.imagem}

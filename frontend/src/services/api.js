@@ -50,6 +50,10 @@ body: corpo !== undefined && corpo !== null
 const dados = await resposta.json().catch(() => ({}));
 
 if (!resposta.ok) {
+if (resposta.status >= 500) {
+  window.location.assign('/500');
+}
+
 throw new Error(
 dados.erro || `Erro na requisição (${resposta.status})`
 );

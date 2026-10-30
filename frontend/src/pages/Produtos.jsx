@@ -69,17 +69,6 @@ function obterCategoria(produto) {
   return produto.nome_categoria ?? '';
 }
 
-function obterMarca(produto) {
-  const marca = produto.marca;
-
-  if (typeof marca === 'string') return marca;
-  if (marca && typeof marca === 'object') {
-    return marca.nome ?? marca.nome_marca ?? '';
-  }
-
-  return produto.nome_marca ?? '';
-}
-
 function obterPreco(produto) {
   const preco = Number(produto.preco);
   return Number.isFinite(preco) && preco >= 0 ? preco : 0;
@@ -96,7 +85,6 @@ export default function Produtos() {
   const [produtos, setProdutos] = useState([]);
   const [busca, setBusca] = useState('');
   const [categoria, setCategoria] = useState('Todas');
-  const [marca, setMarca] = useState('Todas');
   const [ordem, setOrdem] = useState('padrao');
   const [precoMax, setPrecoMax] = useState(null);
 
@@ -148,15 +136,6 @@ export default function Produtos() {
     [produtos]
   );
 
-  const marcas = useMemo(
-    () => [
-      ...new Set(
-        produtos.map(obterMarca).filter(Boolean)
-      ),
-    ].sort((a, b) => a.localeCompare(b, 'pt-BR')),
-    [produtos]
-  );
-
   // Os preços são armazenados em centavos.
   const limitePreco = useMemo(() => {
     const maiorPreco = Math.max(
@@ -184,7 +163,6 @@ export default function Produtos() {
         produto.nome,
         produto.descricao,
         obterCategoria(produto),
-        obterMarca(produto),
       ].join(' '));
 
       const correspondeBusca =
@@ -194,22 +172,16 @@ export default function Produtos() {
         categoria === 'Todas' ||
         obterCategoria(produto) === categoria;
 
-      const correspondeMarca =
-        marca === 'Todas' ||
-        obterMarca(produto) === marca;
-
       const correspondePreco =
         obterPreco(produto) <= precoSelecionado;
 
       return (
         correspondeBusca &&
         correspondeCategoria &&
-        correspondeMarca &&
         correspondePreco
       );
     });
 
-    // Ordena uma cópia da lista filtrada.
     if (ordem === 'menor') {
       lista.sort((a, b) => obterPreco(a) - obterPreco(b));
     }
@@ -218,21 +190,11 @@ export default function Produtos() {
       lista.sort((a, b) => obterPreco(b) - obterPreco(a));
     }
 
-    if (ordem === 'nome') {
-      lista.sort((a, b) =>
-        String(a.nome ?? '').localeCompare(
-          String(b.nome ?? ''),
-          'pt-BR'
-        )
-      );
-    }
-
     return lista;
   }, [
     produtos,
     busca,
     categoria,
-    marca,
     precoSelecionado,
     ordem,
   ]);
@@ -240,7 +202,6 @@ export default function Produtos() {
   function limparFiltros() {
     setBusca('');
     setCategoria('Todas');
-    setMarca('Todas');
     setPrecoMax(null);
     setOrdem('padrao');
   }
@@ -296,8 +257,8 @@ export default function Produtos() {
             <option value="padrao">Ordem padrão</option>
             <option value="menor">Menor preço</option>
             <option value="maior">Maior preço</option>
-            <option value="nome">Nome: A–Z</option>
           </select>
+
         </div>
 
         {erro && (
@@ -350,28 +311,6 @@ export default function Produtos() {
               <option value="Todas">Todas as categorias</option>
 
               {categorias.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-
-            <label
-              htmlFor="filtro-marca"
-              className="mt-5 block text-sm font-bold"
-            >
-              Marcas
-            </label>
-
-            <select
-              id="filtro-marca"
-              value={marca}
-              onChange={(e) => setMarca(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-neutral-200 bg-white p-2 text-sm"
-            >
-              <option value="Todas">Todas as marcas</option>
-
-              {marcas.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>

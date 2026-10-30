@@ -11,7 +11,6 @@ const label = 'block text-sm font-semibold text-choco-marrom';
 
 export default function AuthPage({ tipo = 'login' }) {
   const cadastro = tipo === 'cadastro';
-  const admin = tipo === 'admin';
 
   const [dados, setDados] = useState({
     nome: '',
@@ -39,7 +38,7 @@ export default function AuthPage({ tipo = 'login' }) {
     setSucesso('');
 
     if (cadastro && dados.senha !== dados.confirmarSenha) {
-      setErro('As senhas nÃ£o coincidem.');
+      setErro('As senhas não coincidem.');
       return;
     }
 
@@ -58,7 +57,7 @@ export default function AuthPage({ tipo = 'login' }) {
           },
         });
 
-        setSucesso('Cadastro realizado! Agora vocÃª jÃ¡ pode entrar.');
+        setSucesso('Cadastro realizado! Agora você já pode entrar.');
         setDados({
           nome: '',
           cpf: '',
@@ -70,11 +69,7 @@ export default function AuthPage({ tipo = 'login' }) {
         return;
       }
 
-      const rota = admin
-        ? '/administradores/login'
-        : '/clientes/login';
-
-      const resposta = await api(rota, {
+      const resposta = await api('/auth/login', {
         metodo: 'POST',
         corpo: {
           email: dados.email.trim(),
@@ -83,13 +78,13 @@ export default function AuthPage({ tipo = 'login' }) {
       });
 
       salvarToken(resposta.token);
-        localStorage.setItem('tipoUsuario', admin ? 'admin' : 'cliente');
+      localStorage.setItem('tipoUsuario', resposta.tipo);
 
-        avisarSessaoAtualizada();
+      avisarSessaoAtualizada();
 
-        window.location.href = admin ? '/admin' : '/';
+      window.location.href = resposta.tipo === 'admin' ? '/admin' : '/';
     } catch (erroApi) {
-      setErro(erroApi.message || 'NÃ£o foi possÃ­vel concluir a operaÃ§Ã£o.');
+      setErro(erroApi.message || 'Não foi possível concluir a operação.');
     } finally {
       setCarregando(false);
     }
@@ -97,14 +92,12 @@ export default function AuthPage({ tipo = 'login' }) {
 
   const titulo = cadastro
     ? 'Crie sua conta'
-    : admin
-      ? 'Ãrea administrativa'
-      : 'Bem-vindo de volta!';
+    : 'Bem-vindo de volta!';
 
   return (
     <main className="flex min-h-screen flex-col bg-choco-creme text-choco-marrom">
             <header className="flex items-center justify-between border-b border-choco-pessego/50 bg-white px-5 py-2 sm:px-10">
-        <a href="/" aria-label="Choco World - pÃ¡gina inicial">
+        <a href="/" aria-label="Choco World - página inicial">
           <Logo variante="auth" />
         </a>
 
@@ -112,7 +105,7 @@ export default function AuthPage({ tipo = 'login' }) {
           href="/"
           className="text-sm font-semibold transition hover:text-choco-vermelho"
         >
-          Voltar Ã  loja
+          Voltar à loja
         </a>
       </header>
 
@@ -124,32 +117,28 @@ export default function AuthPage({ tipo = 'login' }) {
 
             <div className="relative">
               <span className="inline-flex rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest">
-                {admin ? 'Acesso restrito' : 'Um mundo de sabores'}
+                {cadastro ? 'Um mundo de sabores' : 'Acesse sua conta'}
               </span>
 
               <h1 className="mt-6 max-w-sm text-3xl font-extrabold leading-tight sm:text-4xl">
-                {admin
-                  ? 'Gerencie sua loja com tranquilidade.'
-                  : cadastro
-                    ? 'Seu prÃ³ximo chocolate favorito comeÃ§a aqui.'
-                    : 'Pequenos momentos, grandes sabores.'}
+                {cadastro
+                  ? 'Seu próximo chocolate favorito começa aqui.'
+                  : 'Pequenos momentos, grandes sabores.'}
               </h1>
 
               <p className="mt-4 max-w-sm text-sm leading-6 text-white/85 sm:text-base">
-                {admin
-                  ? 'Entre com sua conta administrativa para acessar o painel.'
-                  : 'Acesse sua conta, acompanhe seus pedidos e descubra novos chocolates.'}
+                Acesse sua conta, acompanhe seus pedidos e descubra novos chocolates.
               </p>
             </div>
 
             <p className="relative mt-8 text-xs text-white/75">
-              Choco World Â· Feito para quem ama chocolate.
+              Choco World · Feito para quem ama chocolate.
             </p>
           </aside>
 
           <div className="p-6 sm:p-10 lg:p-12">
             <p className="text-sm font-bold tracking-wide text-choco-vermelho">
-              {admin ? 'ADMINISTRAÃ‡ÃƒO' : 'CHOCOLATE Ã‰ FELICIDADE'}
+              {cadastro ? 'CHOCOLATE É FELICIDADE' : 'ACESSO À SUA CONTA'}
             </p>
 
             <h2 className="mt-2 text-2xl font-extrabold sm:text-3xl">
@@ -227,7 +216,7 @@ export default function AuthPage({ tipo = 'login' }) {
                         onChange={atualizar}
                         autoComplete="tel"
                         inputMode="tel"
-                        placeholder="DDD + nÃºmero"
+                        placeholder="DDD + número"
                         required
                       />
                     </div>
@@ -293,19 +282,16 @@ export default function AuthPage({ tipo = 'login' }) {
                   ? 'Aguarde...'
                   : cadastro
                     ? 'Criar minha conta'
-                    : admin
-                      ? 'Entrar no painel'
-                      : 'Entrar na minha conta'}
+                    : 'Entrar na minha conta'}
               </button>
             </form>
 
-            {!admin && (
-              <div className="mt-6 text-center text-sm text-choco-marrom/75">
+            <div className="mt-6 text-center text-sm text-choco-marrom/75">
                 {cadastro ? (
                   <p>
-                    JÃ¡ tem uma conta?{' '}
+                    Já tem uma conta?{' '}
                     <a href="/login" className="font-bold text-choco-vinho hover:underline">
-                      FaÃ§a login
+                      Faça login
                     </a>
                   </p>
                 ) : (
@@ -317,20 +303,13 @@ export default function AuthPage({ tipo = 'login' }) {
                   </p>
                     <p className="mt-2"><a href="/recuperar-senha" className="font-semibold text-choco-vinho hover:underline">Esqueceu a senha?</a></p></>
                 )}
-              </div>
-            )}
-
-            {admin && (
-              <p className="mt-6 text-center text-xs text-choco-marrom/60">
-                Ãrea exclusiva para administradores autorizados.
-              </p>
-            )}
+            </div>
           </div>
         </div>
       </section>
 
       <footer className="px-4 pb-5 text-center text-xs text-choco-marrom/60">
-        Â© {new Date().getFullYear()} Choco World Â· Todos os direitos reservados.
+        © {new Date().getFullYear()} Choco World · Todos os direitos reservados.
       </footer>
     </main>
   );
