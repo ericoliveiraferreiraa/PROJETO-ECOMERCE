@@ -88,6 +88,21 @@ export default function Checkout() {
     [enderecos, idEndereco]
   );
 
+  const valorFreteEstimado = useMemo(() => {
+    const cep = String(enderecoSelecionado?.cep || '').replace(/\D/g, '');
+
+    if (!/^\d{8}$/.test(cep)) return null;
+
+    const prefixo = Number(cep.slice(0, 2));
+    if (prefixo === 6) return 1290;
+    if ((prefixo >= 1 && prefixo <= 5) || (prefixo >= 7 && prefixo <= 9)) {
+      return 1990;
+    }
+    return 2490;
+  }, [enderecoSelecionado]);
+
+  const totalEstimado = subtotal + (valorFreteEstimado ?? 0);
+
   const carregarEnderecos = useCallback(async () => {
     try {
       const resposta = await api('/enderecos', {
@@ -712,6 +727,25 @@ async function continuarParaPagamento() {
 
               <div className="my-5 border-t border-dashed border-[#decac0]" />
 
+              <div className="mb-5 rounded-xl border-2 border-[#702538] bg-[#fff6f0] p-4">
+                <div className="flex items-center gap-3">
+                  <span
+                    role="checkbox"
+                    aria-checked="true"
+                    aria-label="SEDEX selecionado"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-[#702538] bg-[#702538] text-sm font-bold text-white"
+                  >
+                    ✓
+                  </span>
+                  <div>
+                    <p className="font-bold text-[#702538]">SEDEX</p>
+                    <p className="mt-1 text-xs text-[#775d5d]">
+                      Tipo de envio selecionado
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between gap-3">
                   <span className="text-[#775d5d]">Subtotal</span>
@@ -726,7 +760,9 @@ async function continuarParaPagamento() {
                   <strong>
                     {pedidoCriado
                       ? formatarPreco(pedidoCriado.valor_frete)
-                      : 'Calculado ao criar o pedido'}
+                      : valorFreteEstimado !== null
+                        ? formatarPreco(valorFreteEstimado)
+                        : 'Selecione um endereço válido'}
                   </strong>
                 </div>
               </div>
@@ -735,11 +771,11 @@ async function continuarParaPagamento() {
 
               <div className="flex items-center justify-between gap-3">
                 <span className="font-bold">
-                  {pedidoCriado ? 'Total do pedido' : 'Subtotal dos produtos'}
+                  {pedidoCriado ? 'Total do pedido' : 'Total estimado'}
                 </span>
                 <strong className="text-xl">
                   {formatarPreco(
-                    pedidoCriado?.valor_total ?? subtotal
+                    pedidoCriado?.valor_total ?? totalEstimado
                   )}
                 </strong>
               </div>
@@ -747,7 +783,7 @@ async function continuarParaPagamento() {
               <p className="mt-3 text-xs leading-5 text-[#775d5d]">
                 {pedidoCriado
                   ? `Pedido #${pedidoCriado.id_pedido} — ${pedidoCriado.status}. Continue para abrir o Mercado Pago.`
-                  : 'O total definitivo, incluindo o frete, será calculado pelo backend ao criar o pedido.'}
+                  : 'Frete estimado conforme o CEP. O valor definitivo é validado ao criar o pedido.'}
               </p>
 
               <button
