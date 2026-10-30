@@ -4,239 +4,250 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { formatarPreco } from '../utils/moeda';
 
-export default function MeusPedidos() {
-const [pedidos, setPedidos] = useState([]);
-const [carregando, setCarregando] = useState(true);
-const [erro, setErro] = useState('');
-const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
-const [carregandoDetalhes, setCarregandoDetalhes] = useState(false);
+const statusPedido = {
+  aguardando_pagamento: 'Aguardando pagamento',
+  pago: 'Pagamento aprovado',
+  em_separacao: 'Em separação',
+  enviado: 'Enviado',
+  entregue: 'Entregue',
+  cancelado: 'Cancelado',
+};
 
-useEffect(() => {
-async function carregarPedidos() {
-try {
-const dados = await api('/pedidos', {
-autenticado: true,
-});
+const statusPagamento = {
+  pendente: 'Pendente',
+  aprovado: 'Aprovado',
+  rejeitado: 'Recusado',
+  cancelado: 'Cancelado',
+};
 
-
-    setPedidos(Array.isArray(dados) ? dados : []);
-  } catch (error) {
-    setErro(error.message || 'Não foi possível carregar os pedidos.');
-  } finally {
-    setCarregando(false);
+function obterStatusVisual(pedido) {
+  if (pedido.status === 'cancelado' || pedido.pagamento_status === 'cancelado') {
+    return {
+      rotulo: 'Cancelado',
+      classes: 'bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200 shadow-[0_0_10px_rgba(107,114,128,0.14)]',
+    };
   }
-}
 
-carregarPedidos();
+  if (pedido.status === 'recusado' || ['rejeitado', 'recusado'].includes(pedido.pagamento_status)) {
+    return {
+      rotulo: 'Pagamento recusado',
+      classes: 'bg-red-50 text-red-700 ring-1 ring-red-200 shadow-[0_0_12px_rgba(239,68,68,0.2)]',
+    };
+  }
 
+  if (['em_separacao', 'enviado', 'entregue'].includes(pedido.status)) {
+    return {
+      rotulo: statusPedido[pedido.status],
+      classes: 'bg-sky-50 text-sky-800 ring-1 ring-sky-200',
+    };
+  }
 
-}, []);
+  if (pedido.status === 'pago' || pedido.pagamento_status === 'aprovado') {
+    return {
+      rotulo: 'Pagamento aprovado',
+      classes: 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.2)]',
+    };
+  }
 
-async function verDetalhes(idPedido) {
-setPedidoSelecionado(null);
-setCarregandoDetalhes(true);
-setErro('');
+  if (pedido.status === 'aguardando_pagamento' || pedido.pagamento_status === 'pendente') {
+    return {
+      rotulo: 'Aguardando pagamento',
+      classes: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.2)]',
+    };
+  }
 
-
-try {
-  const dados = await api(`/pedidos/${idPedido}`, {
-    autenticado: true,
-  });
-
-  setPedidoSelecionado(dados);
-} catch (error) {
-  setErro(error.message || 'Não foi possível carregar os detalhes.');
-} finally {
-  setCarregandoDetalhes(false);
-}
-
-
+  return {
+    rotulo: statusPedido[pedido.status] || pedido.status,
+    classes: 'bg-sky-50 text-sky-800 ring-1 ring-sky-200',
+  };
 }
 
 function formatarData(data) {
-if (!data) return 'Data não informada';
+  if (!data) return 'Data não informada';
 
+  // SQLite salva DATETIME local sem fuso; parsear como UTC deslocaria o horário.
+  const localSqlite = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(data);
+  const dataConvertida = localSqlite
+    ? new Date(...[
+        Number(localSqlite[1]), Number(localSqlite[2]) - 1,
+        Number(localSqlite[3]), Number(localSqlite[4]),
+        Number(localSqlite[5]), Number(localSqlite[6]),
+      ])
+    : new Date(data);
 
-const dataConvertida = new Date(data);
-
-if (Number.isNaN(dataConvertida.getTime())) {
-  return data;
+  return Number.isNaN(dataConvertida.getTime())
+    ? data
+    : dataConvertida.toLocaleString('pt-BR');
 }
 
-return dataConvertida.toLocaleString('pt-BR');
-
-
+function formatarMetodo(metodo) {
+  if (!metodo) return 'Não informado';
+  if (metodo === 'mercado_pago') return 'Mercado Pago';
+  return metodo.replaceAll('_', ' ').replace(/\b\w/g, (letra) => letra.toUpperCase());
 }
 
-function formatarStatus(status) {
-const nomes = {
-aguardando_pagamento: 'Aguardando pagamento',
-pago: 'Pago',
-em_separacao: 'Em separação',
-enviado: 'Enviado',
-entregue: 'Entregue',
-cancelado: 'Cancelado',
-};
+function EnderecoEntrega({ pedido }) {
+  if (!pedido.endereco_logradouro) {
+    return <p className="mt-2 text-sm text-neutral-500">Endereço não disponível para este pedido.</p>;
+  }
 
-
-return nomes[status] || status;
-
-
-}
-
-return ( <div className="min-h-screen bg-choco-creme text-choco-marrom"> <Navbar />
-
-
-  <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-    <a
-      href="/minha-conta"
-      className="text-sm font-semibold text-choco-vinho hover:underline"
-    >
-      ← Voltar para minha conta
-    </a>
-
-    <h1 className="mt-4 text-3xl font-extrabold">
-      Meus pedidos
-    </h1>
-
-    <p className="mt-2 text-neutral-600">
-      Acompanhe suas compras realizadas na Choco World.
-    </p>
-
-    {carregando && (
-      <p className="mt-8">Carregando seu histórico...</p>
-    )}
-
-    {erro && (
-      <p className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">
-        {erro}
-      </p>
-    )}
-
-    {!carregando && !erro && pedidos.length === 0 && (
-      <section className="mt-8 rounded-2xl bg-white p-8 text-center shadow-sm">
-        <div className="text-4xl">🍫</div>
-
-        <h2 className="mt-4 text-xl font-bold">
-          Você ainda não tem pedidos
-        </h2>
-
-        <p className="mt-2 text-neutral-600">
-          Quando fizer sua primeira compra, ela aparecerá aqui.
-        </p>
-
-        <a
-          href="/produtos"
-          className="mt-5 inline-flex rounded-xl bg-choco-vinho px-5 py-3 font-bold text-white hover:bg-choco-vinho-claro"
-        >
-          Explorar produtos
-        </a>
-      </section>
-    )}
-
-    <div className="mt-8 space-y-4">
-      {pedidos.map((pedido) => (
-        <article
-          key={pedido.id_pedido}
-          className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6"
-        >
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-sm text-neutral-500">
-                Pedido #{pedido.id_pedido}
-              </p>
-
-              <p className="mt-1 font-semibold">
-                {formatarData(pedido.data_pedido)}
-              </p>
-            </div>
-
-            <div className="sm:text-right">
-              <p className="text-sm text-neutral-500">
-                Valor total
-              </p>
-
-              <p className="text-xl font-extrabold text-choco-vinho">
-                {formatarPreco(pedido.valor_total)}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 pt-4">
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
-              {formatarStatus(pedido.status)}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => verDetalhes(pedido.id_pedido)}
-              className="font-bold text-choco-vinho hover:underline"
-            >
-              Ver detalhes →
-            </button>
-          </div>
-        </article>
-      ))}
+  return (
+    <div className="mt-2 text-sm leading-6 text-neutral-700">
+      <p>{pedido.endereco_logradouro}, {pedido.endereco_numero}
+        {pedido.endereco_complemento ? ` — ${pedido.endereco_complemento}` : ''}</p>
+      <p>{pedido.endereco_bairro} · {pedido.endereco_cidade}/{pedido.endereco_estado}</p>
+      <p>CEP {pedido.endereco_cep}</p>
     </div>
+  );
+}
 
-    {carregandoDetalhes && (
-      <p className="mt-6">Carregando detalhes do pedido...</p>
-    )}
+export default function MeusPedidos() {
+  const [pedidos, setPedidos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
+  const [idCarregando, setIdCarregando] = useState(null);
+  const [erroDetalhes, setErroDetalhes] = useState('');
+  const [idErroDetalhes, setIdErroDetalhes] = useState(null);
 
-    {pedidoSelecionado && (
-      <section className="mt-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-extrabold">
-            Pedido #{pedidoSelecionado.id_pedido}
-          </h2>
+  useEffect(() => {
+    async function carregarPedidos() {
+      try {
+        const dados = await api('/pedidos', { autenticado: true });
+        setPedidos(Array.isArray(dados) ? dados : []);
+      } catch (error) {
+        setErro(error.message || 'Não foi possível carregar os pedidos.');
+      } finally {
+        setCarregando(false);
+      }
+    }
+    carregarPedidos();
+  }, []);
 
-          <button
-            type="button"
-            onClick={() => setPedidoSelecionado(null)}
-            className="text-sm font-semibold text-choco-vinho hover:underline"
-          >
-            Fechar detalhes
-          </button>
+  async function verDetalhes(idPedido) {
+    if (pedidoSelecionado?.id_pedido === idPedido) {
+      setPedidoSelecionado(null);
+      setErroDetalhes('');
+      setIdErroDetalhes(null);
+      return;
+    }
+
+    setPedidoSelecionado(null);
+    setErroDetalhes('');
+    setIdErroDetalhes(null);
+    setIdCarregando(idPedido);
+    try {
+      const dados = await api(`/pedidos/${idPedido}`, { autenticado: true });
+      setPedidoSelecionado(dados);
+    } catch (error) {
+      setErroDetalhes(error.message || 'Não foi possível carregar os detalhes.');
+      setIdErroDetalhes(idPedido);
+    } finally {
+      setIdCarregando(null);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-choco-creme text-choco-marrom">
+      <Navbar />
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
+        <a href="/minha-conta" className="text-sm font-semibold text-choco-vinho hover:underline">
+          ← Voltar para minha conta
+        </a>
+        <h1 className="mt-4 text-3xl font-extrabold">Meus pedidos</h1>
+        <p className="mt-2 text-neutral-600">Acompanhe suas compras realizadas na Choco World.</p>
+
+        {carregando && <p className="mt-8">Carregando seu histórico...</p>}
+        {erro && <p className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">{erro}</p>}
+
+        {!carregando && !erro && pedidos.length === 0 && (
+          <section className="mt-8 rounded-2xl bg-white p-8 text-center shadow-sm">
+            <div className="text-4xl">🍫</div>
+            <h2 className="mt-4 text-xl font-bold">Você ainda não tem pedidos</h2>
+            <p className="mt-2 text-neutral-600">Quando fizer sua primeira compra, ela aparecerá aqui.</p>
+            <a href="/produtos" className="mt-5 inline-flex rounded-xl bg-choco-vinho px-5 py-3 font-bold text-white hover:bg-choco-vinho-claro">
+              Explorar produtos
+            </a>
+          </section>
+        )}
+
+        <div className="mt-8 space-y-4">
+          {pedidos.map((pedido) => {
+            const aberto = pedidoSelecionado?.id_pedido === pedido.id_pedido;
+            const carregandoEste = idCarregando === pedido.id_pedido;
+            const statusVisual = obterStatusVisual(pedido);
+            return (
+              <article key={pedido.id_pedido} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div>
+                    <p className="text-sm text-neutral-500">Pedido #{pedido.id_pedido}</p>
+                    <p className="mt-1 font-semibold">{formatarData(pedido.data_pedido)}</p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-sm text-neutral-500">Valor total</p>
+                    <p className="text-xl font-extrabold text-choco-vinho">{formatarPreco(pedido.valor_total)}</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 pt-4">
+                  <span className={`rounded-full px-3 py-1 text-sm font-semibold transition-shadow ${statusVisual.classes}`}>
+                    {statusVisual.rotulo}
+                  </span>
+                  <button type="button" onClick={() => verDetalhes(pedido.id_pedido)} className="font-bold text-choco-vinho hover:underline" aria-expanded={aberto}>
+                    {carregandoEste ? 'Carregando...' : aberto ? 'Fechar detalhes ↑' : 'Ver detalhes →'}
+                  </button>
+                </div>
+
+                {carregandoEste && <p className="mt-5 text-sm text-neutral-600">Carregando os itens e informações do pedido...</p>}
+                {erroDetalhes && idErroDetalhes === pedido.id_pedido && (
+                  <p className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{erroDetalhes}</p>
+                )}
+                {aberto && (
+                  <section className="mt-5 border-t border-neutral-200 pt-5" aria-label={`Detalhes do pedido ${pedido.id_pedido}`}>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div>
+                        <h2 className="font-bold">Resumo do pedido</h2>
+                        <p className="mt-2 text-sm text-neutral-600">Pedido #{pedidoSelecionado.id_pedido} · realizado em {formatarData(pedidoSelecionado.data_pedido)}</p>
+                        <p className="mt-2 text-sm text-neutral-600">Situação: <span className="font-semibold text-neutral-800">{statusPedido[pedidoSelecionado.status] || pedidoSelecionado.status}</span></p>
+                      </div>
+                      <div>
+                        <h2 className="font-bold">Entrega</h2>
+                        <EnderecoEntrega pedido={pedidoSelecionado} />
+                      </div>
+                    </div>
+
+                    <h3 className="mt-6 font-bold">Itens do pedido</h3>
+                    {pedidoSelecionado.itens?.length ? (
+                      <div className="mt-2 divide-y divide-neutral-100">
+                        {pedidoSelecionado.itens.map((item, indice) => (
+                          <div key={`${item.id_produto}-${indice}`} className="flex items-start justify-between gap-4 py-3">
+                            <div>
+                              <p className="font-semibold">{item.produto}</p>
+                              <p className="mt-1 text-sm text-neutral-500">{item.quantidade} × {formatarPreco(item.preco_unitario)} cada</p>
+                            </div>
+                            <p className="shrink-0 font-bold">{formatarPreco(item.subtotal)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="mt-2 text-sm text-neutral-500">Nenhum item foi encontrado neste pedido.</p>}
+
+                    <div className="mt-4 space-y-2 border-t border-neutral-200 pt-4 text-sm">
+                      <div className="flex justify-between gap-4"><span>Subtotal dos produtos</span><span>{formatarPreco(pedidoSelecionado.itens?.reduce((total, item) => total + Number(item.subtotal || 0), 0) || 0)}</span></div>
+                      <div className="flex justify-between gap-4"><span>Frete</span><span>{formatarPreco(pedidoSelecionado.valor_frete || 0)}</span></div>
+                      <div className="flex justify-between gap-4 pt-1 text-base font-extrabold"><span>Total</span><span className="text-choco-vinho">{formatarPreco(pedidoSelecionado.valor_total)}</span></div>
+                    </div>
+
+                    <div className="mt-5 rounded-xl bg-neutral-50 p-4 text-sm">
+                      <p><span className="font-semibold">Pagamento:</span> {formatarMetodo(pedidoSelecionado.pagamento_metodo)}</p>
+                      <p className="mt-1"><span className="font-semibold">Situação do pagamento:</span> {statusPagamento[pedidoSelecionado.pagamento_status] || pedidoSelecionado.pagamento_status || 'Não informado'}</p>
+                    </div>
+                  </section>
+                )}
+              </article>
+            );
+          })}
         </div>
-
-        <p className="mt-2 text-sm text-neutral-500">
-          {formatarData(pedidoSelecionado.data_pedido)}
-        </p>
-
-        <div className="mt-5 divide-y divide-neutral-100">
-          {pedidoSelecionado.itens?.map((item, indice) => (
-            <div
-              key={`${item.id_produto}-${indice}`}
-              className="flex items-start justify-between gap-4 py-4"
-            >
-              <div>
-                <p className="font-semibold">{item.produto}</p>
-
-                <p className="mt-1 text-sm text-neutral-500">
-                  Quantidade: {item.quantidade} ×{' '}
-                  {formatarPreco(item.preco_unitario)}
-                </p>
-              </div>
-
-              <p className="shrink-0 font-bold">
-                {formatarPreco(item.subtotal)}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 flex justify-between border-t border-neutral-200 pt-4">
-          <span className="font-semibold">Total do pedido</span>
-
-          <span className="text-lg font-extrabold text-choco-vinho">
-            {formatarPreco(pedidoSelecionado.valor_total)}
-          </span>
-        </div>
-      </section>
-    )}
-  </main>
-
-  <Footer />
-</div>
-);
+      </main>
+      <Footer />
+    </div>
+  );
 }

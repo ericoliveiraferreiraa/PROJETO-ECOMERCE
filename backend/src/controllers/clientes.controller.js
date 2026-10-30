@@ -6,10 +6,22 @@ const SALT_ROUNDS = 10;
 
 // POST /clientes  (RF: cadastro de cliente)
 function cadastrar(req, res, next) {
-  const { nome, cpf, email, telefone, senha } = req.body;
+  const { senha } = req.body;
+  const nome = String(req.body.nome || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR');
+  const cpf = String(req.body.cpf || '').replace(/\D/g, '');
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const telefone = String(req.body.telefone || '').replace(/\D/g, '');
 
   if (!nome || !cpf || !email || !telefone || !senha) {
     return res.status(400).json({ erro: 'Campos obrigatorios: nome, cpf, email, telefone, senha.' });
+  }
+
+  if (cpf.length !== 11) {
+    return res.status(400).json({ erro: 'O CPF deve conter exatamente 11 dígitos.' });
+  }
+
+  if (telefone.length !== 10 && telefone.length !== 11) {
+    return res.status(400).json({ erro: 'O telefone deve conter DDD e número: 10 ou 11 dígitos.' });
   }
 
   try {

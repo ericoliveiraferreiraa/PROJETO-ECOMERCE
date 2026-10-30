@@ -1,5 +1,6 @@
 
 import { api, getToken, sair as removerToken } from './api';
+import { limparCarrinho } from './carrinho';
 
 const EVENTO_SESSAO = 'sessao:atualizada';
 
@@ -31,6 +32,7 @@ export async function buscarUsuarioLogado() {
 }
 
 export function encerrarSessao() {
+  limparCarrinho();
   removerToken();
   localStorage.removeItem('tipoUsuario');
   avisarSessaoAtualizada();

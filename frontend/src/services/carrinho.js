@@ -1,7 +1,19 @@
 
 const CHAVE = 'carrinho';
 
+function clienteLogado() {
+  return Boolean(
+    localStorage.getItem('token') &&
+    localStorage.getItem('tipoUsuario') === 'cliente'
+  );
+}
+
 export function lerCarrinho() {
+  if (!clienteLogado()) {
+    localStorage.removeItem(CHAVE);
+    return [];
+  }
+
   try {
     return JSON.parse(localStorage.getItem(CHAVE)) || [];
   } catch {
@@ -10,11 +22,19 @@ export function lerCarrinho() {
 }
 
 function salvar(itens) {
+  if (!clienteLogado()) {
+    localStorage.removeItem(CHAVE);
+    window.dispatchEvent(new Event('carrinho:atualizado'));
+    return;
+  }
+
   localStorage.setItem(CHAVE, JSON.stringify(itens));
   window.dispatchEvent(new Event('carrinho:atualizado'));
 }
 
 export function adicionarAoCarrinho(produto, quantidade = 1) {
+  if (!clienteLogado()) return false;
+
   const itens = lerCarrinho();
   const existente = itens.find(
     (item) => item.id_produto === produto.id_produto
@@ -33,6 +53,7 @@ export function adicionarAoCarrinho(produto, quantidade = 1) {
   }
 
   salvar(itens);
+  return true;
 }
 
 export function atualizarQuantidade(idProduto, quantidade) {
@@ -52,7 +73,8 @@ export function removerDoCarrinho(idProduto) {
 }
 
 export function limparCarrinho() {
-  salvar([]);
+  localStorage.removeItem(CHAVE);
+  window.dispatchEvent(new Event('carrinho:atualizado'));
 }
 
 export function totalItensCarrinho() {

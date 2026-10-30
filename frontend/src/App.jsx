@@ -14,6 +14,8 @@ import TicketPremiado from './pages/TicketPremiado';
 import ProdutoDetalhe from './pages/ProdutoDetalhe';
 import PaginaErro from './pages/PaginaErro';
 import RecuperarSenha from './pages/RecuperarSenha';
+import Checkout from './pages/Checkout';
+import RetornoPagamento from './pages/RetornoPagamento';
 
 import { encerrarSessao } from './services/sessao';
 
@@ -42,6 +44,7 @@ export default function App() {
       const paginasPrivadas = [
         '/minha-conta',
         '/meus-pedidos',
+        '/checkout',
       ];
 
       if (paginasPrivadas.includes(window.location.pathname)) {
@@ -94,6 +97,18 @@ export default function App() {
 
     case '/carrinho':
       return <Carrinho />;
+
+    case '/checkout':
+      return <Checkout />;
+
+    case '/pagamento/sucesso':
+      return <RetornoPagamento tipo="sucesso" />;
+
+    case '/pagamento/pendente':
+      return <RetornoPagamento tipo="pendente" />;
+
+    case '/pagamento/falha':
+      return <RetornoPagamento tipo="falha" />;
 
     case '/cadastro':
       return <AuthPage tipo="cadastro" />;

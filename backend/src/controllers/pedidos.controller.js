@@ -1,16 +1,31 @@
 
 const db = require('../../db');
+const { calcularFrete } = require('../services/frete');
 
 // POST /pedidos
-// Cria um pedido sem baixar o estoque.
-// O estoque sera debitado na confirmacao do pagamento.
+// Cria um pedido com endereco e frete validados.
+// O estoque nao e reduzido nesta etapa.
 function criar(req, res, next) {
-  const { itens } = req.body;
-  const id_cliente = req.cliente.id_cliente;
+  const { itens, id_endereco } = req.body;
+  const id_cliente = Number(req.cliente.id_cliente);
 
   if (!Array.isArray(itens) || itens.length === 0) {
     return res.status(400).json({
       erro: 'O pedido precisa ter pelo menos um item.',
+    });
+  }
+
+  const idEndereco = Number(id_endereco);
+
+  if (!Number.isInteger(idEndereco) || idEndereco <= 0) {
+    return res.status(400).json({
+      erro: 'Selecione um endereco de entrega valido.',
+    });
+  }
+
+  if (!Number.isInteger(id_cliente) || id_cliente <= 0) {
+    return res.status(401).json({
+      erro: 'Cliente autenticado invalido.',
     });
   }
 
@@ -45,10 +60,18 @@ function criar(req, res, next) {
     quantidadesPorProduto.set(id_produto, quantidadeAcumulada);
   }
 
+  const buscarEndereco = db.prepare(`
+    SELECT id_endereco, cep
+    FROM endereco
+    WHERE id_endereco = ?
+      AND id_cliente = ?
+  `);
+
   const buscarProduto = db.prepare(`
     SELECT id_produto, nome, preco
     FROM produto
-    WHERE id_produto = ? AND ativo = 1
+    WHERE id_produto = ?
+      AND ativo = 1
   `);
 
   const buscarEstoque = db.prepare(`
@@ -58,8 +81,14 @@ function criar(req, res, next) {
   `);
 
   const inserirPedido = db.prepare(`
-    INSERT INTO pedido (id_cliente, valor_total, status)
-    VALUES (?, ?, 'aguardando_pagamento')
+    INSERT INTO pedido (
+      id_cliente,
+      valor_total,
+      status,
+      id_endereco,
+      valor_frete
+    )
+    VALUES (?, ?, 'aguardando_pagamento', ?, ?)
   `);
 
   const inserirItem = db.prepare(`
@@ -76,13 +105,26 @@ function criar(req, res, next) {
   let transacaoAberta = false;
 
   try {
-    // Impede que outra escrita altere o estoque entre a verificacao
-    // e a criacao do pedido. O estoque ainda nao sera reduzido.
     db.exec('BEGIN IMMEDIATE');
     transacaoAberta = true;
 
+    // Impede que um cliente utilize o endereco de outra pessoa.
+    const endereco = buscarEndereco.get(idEndereco, id_cliente);
+
+    if (!endereco) {
+      db.exec('ROLLBACK');
+      transacaoAberta = false;
+
+      return res.status(400).json({
+        erro: 'Endereco nao encontrado ou nao pertence ao cliente.',
+      });
+    }
+
+    // O frete e calculado pelo backend, nunca pelo navegador.
+    const frete = calcularFrete(endereco.cep);
+
     const itensValidados = [];
-    let valorTotal = 0;
+    let subtotalProdutos = 0;
 
     for (const [id_produto, quantidade] of quantidadesPorProduto) {
       const produto = buscarProduto.get(id_produto);
@@ -115,10 +157,10 @@ function criar(req, res, next) {
         throw erro;
       }
 
-      valorTotal += subtotal;
+      subtotalProdutos += subtotal;
 
-      if (!Number.isSafeInteger(valorTotal)) {
-        const erro = new Error('O valor total do pedido e invalido.');
+      if (!Number.isSafeInteger(subtotalProdutos)) {
+        const erro = new Error('O subtotal dos produtos e invalido.');
         erro.statusCode = 400;
         throw erro;
       }
@@ -131,7 +173,24 @@ function criar(req, res, next) {
       });
     }
 
-    const resultadoPedido = inserirPedido.run(id_cliente, valorTotal);
+    const valorTotal = subtotalProdutos + frete.valor_frete;
+
+    if (
+      !Number.isSafeInteger(valorTotal) ||
+      valorTotal <= 0
+    ) {
+      const erro = new Error('O valor total do pedido e invalido.');
+      erro.statusCode = 400;
+      throw erro;
+    }
+
+    const resultadoPedido = inserirPedido.run(
+      id_cliente,
+      valorTotal,
+      idEndereco,
+      frete.valor_frete
+    );
+
     const id_pedido = Number(resultadoPedido.lastInsertRowid);
 
     for (const item of itensValidados) {
@@ -149,6 +208,9 @@ function criar(req, res, next) {
 
     return res.status(201).json({
       id_pedido,
+      id_endereco: idEndereco,
+      subtotal_produtos: subtotalProdutos,
+      valor_frete: frete.valor_frete,
       valor_total: valorTotal,
       status: 'aguardando_pagamento',
     });
@@ -157,7 +219,10 @@ function criar(req, res, next) {
       try {
         db.exec('ROLLBACK');
       } catch (erroRollback) {
-        console.error('Erro ao reverter a transacao:', erroRollback);
+        console.error(
+          'Erro ao reverter a transacao:',
+          erroRollback
+        );
       }
     }
 
@@ -176,10 +241,18 @@ function criar(req, res, next) {
 function listarDoCliente(req, res, next) {
   try {
     const pedidos = db.prepare(`
-      SELECT id_pedido, data_pedido, status, valor_total
-      FROM pedido
-      WHERE id_cliente = ?
-      ORDER BY data_pedido DESC
+      SELECT
+        p.id_pedido,
+        p.data_pedido,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        pg.status AS pagamento_status
+      FROM pedido p
+      LEFT JOIN pagamento pg
+        ON pg.id_pedido = p.id_pedido
+      WHERE p.id_cliente = ?
+      ORDER BY p.data_pedido DESC
     `).all(req.cliente.id_cliente);
 
     return res.json(pedidos);
@@ -201,9 +274,29 @@ function obterPorId(req, res, next) {
     }
 
     const pedido = db.prepare(`
-      SELECT id_pedido, id_cliente, data_pedido, status, valor_total
-      FROM pedido
-      WHERE id_pedido = ?
+      SELECT
+        p.id_pedido,
+        p.id_cliente,
+        p.data_pedido,
+        p.status,
+        p.valor_total,
+        p.valor_frete,
+        e.cep AS endereco_cep,
+        e.logradouro AS endereco_logradouro,
+        e.numero AS endereco_numero,
+        e.complemento AS endereco_complemento,
+        e.bairro AS endereco_bairro,
+        e.cidade AS endereco_cidade,
+        e.estado AS endereco_estado,
+        pg.metodo AS pagamento_metodo,
+        pg.status AS pagamento_status
+      FROM pedido p
+      LEFT JOIN endereco e
+        ON e.id_endereco = p.id_endereco
+       AND e.id_cliente = p.id_cliente
+      LEFT JOIN pagamento pg
+        ON pg.id_pedido = p.id_pedido
+      WHERE p.id_pedido = ?
     `).get(id_pedido);
 
     if (!pedido) {
@@ -212,7 +305,10 @@ function obterPorId(req, res, next) {
       });
     }
 
-    if (Number(pedido.id_cliente) !== Number(req.cliente.id_cliente)) {
+    if (
+      Number(pedido.id_cliente) !==
+      Number(req.cliente.id_cliente)
+    ) {
       return res.status(403).json({
         erro: 'Este pedido nao pertence a voce.',
       });
@@ -226,7 +322,8 @@ function obterPorId(req, res, next) {
         ip.preco_unitario,
         ip.subtotal
       FROM item_pedido ip
-      JOIN produto pr ON pr.id_produto = ip.id_produto
+      JOIN produto pr
+        ON pr.id_produto = ip.id_produto
       WHERE ip.id_pedido = ?
     `).all(pedido.id_pedido);
 
