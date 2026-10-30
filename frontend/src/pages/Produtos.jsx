@@ -49,14 +49,6 @@ const EXEMPLOS = [
   },
 ];
 
-const FUNDOS = [
-  '#fce7e7',
-  '#f4eee9',
-  '#fff3d6',
-  '#e5efff',
-  '#e4f6ed',
-];
-
 // Padroniza textos para pesquisa sem diferença de acentos.
 function normalizarTexto(valor) {
   return String(valor ?? '')
@@ -457,11 +449,10 @@ export default function Produtos() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {filtrados.map((produto, index) => (
+                {filtrados.map((produto) => (
                   <CardProduto
                     key={produto.id_produto}
                     produto={produto}
-                    fundo={FUNDOS[index % FUNDOS.length]}
                     onAdicionar={adicionar}
                   />
                 ))}

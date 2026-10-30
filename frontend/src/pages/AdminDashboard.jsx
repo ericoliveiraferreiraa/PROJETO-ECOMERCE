@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, sair } from '../services/api';
 import { formatarPreco } from '../utils/moeda';
+import Logo from '../components/Logo';
 
 
 const SECOES = [
@@ -284,13 +285,15 @@ function AdminDashboard() {
   const classesBotao = 'rounded-xl px-4 py-3 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-50';
 
   return (
-    <div className="min-h-screen bg-[#faf6ef] text-stone-800">
-      <header className="bg-[#40251d] text-white shadow-md">
+    <div className="min-h-screen bg-choco-creme text-choco-marrom">
+      <header className="bg-choco-vinho text-white shadow-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">Choco World</p>
-            <h1 className="mt-1 text-xl font-bold sm:text-2xl">Painel administrativo</h1>
-            <p className="mt-1 text-sm text-amber-100/80">Gerencie sua loja de chocolates</p>
+          <div className="flex min-w-0 items-center gap-4">
+            <Logo variante="navbar" />
+            <div>
+              <h1 className="text-xl font-bold sm:text-2xl">Painel administrativo</h1>
+              <p className="mt-1 text-sm text-white/80">Gerencie sua loja de chocolates</p>
+            </div>
           </div>
           <button type="button" onClick={fazerLogout} className="shrink-0 rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold transition hover:bg-white/10">Sair</button>
         </div>

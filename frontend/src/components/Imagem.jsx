@@ -9,11 +9,19 @@ export default function Imagem({
 }) {
   const [falhou, setFalhou] = useState(false);
 
+  const origem = typeof src === 'string' ? src.trim() : '';
+  const srcNormalizado = origem &&
+    !origem.startsWith('/') &&
+    !/^https?:\/\//i.test(origem) &&
+    !/^data:|^blob:/i.test(origem)
+      ? `/${origem.replace(/^\.\//, '')}`
+      : origem;
+
   useEffect(() => {
     setFalhou(false);
-  }, [src]);
+  }, [srcNormalizado]);
 
-  if (!src || falhou) {
+  if (!srcNormalizado || falhou) {
     return (
       <div
         role="img"
@@ -27,7 +35,7 @@ export default function Imagem({
 
   return (
     <img
-      src={src}
+      src={srcNormalizado}
       alt={alt}
       loading="lazy"
       className={`block max-w-full ${className}`}

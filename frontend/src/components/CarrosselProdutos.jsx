@@ -3,10 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import CardProduto from './CardProduto';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons';
 
-const FUNDOS = ['#FDECEC', '#F1F1F1', '#FFF8E0', '#E8F1FC'];
-
 const SETA =
-  'absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-choco-marrom shadow-md ring-1 ring-black/10 transition-colors hover:bg-choco-vermelho hover:text-white disabled:pointer-events-none disabled:opacity-0 md:flex';
+  'absolute top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-choco-marrom shadow-md ring-1 ring-black/10 transition-colors hover:bg-choco-vermelho hover:text-white disabled:pointer-events-none disabled:opacity-0 md:h-10 md:w-10';
 
 export default function CarrosselProdutos({
   produtos = [],
@@ -71,7 +69,7 @@ export default function CarrosselProdutos({
         onClick={() => rolar(-1)}
         disabled={!podeVoltar}
         aria-label="Produtos anteriores"
-        className={`${SETA} -left-2 lg:-left-5`}
+        className={`${SETA} left-1 md:-left-2 lg:-left-5`}
       >
         <ChevronLeftIcon width={20} height={20} />
       </button>
@@ -85,7 +83,7 @@ export default function CarrosselProdutos({
         tabIndex={0}
         className="flex items-stretch gap-6 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {produtos.map((produto, indice) => (
+        {produtos.map((produto) => (
           <div
             key={produto.id_produto}
             className="min-w-0 shrink-0 basis-[78%] snap-start sm:basis-[calc((100%_-_1.5rem)/2)] lg:basis-[calc((100%_-_4.5rem)/4)]"
@@ -93,7 +91,6 @@ export default function CarrosselProdutos({
             <div className="flex w-full">
               <CardProduto
                 produto={produto}
-                fundo={FUNDOS[indice % FUNDOS.length]}
                 onAdicionar={onAdicionar}
               />
             </div>
@@ -106,7 +103,7 @@ export default function CarrosselProdutos({
         onClick={() => rolar(1)}
         disabled={!podeAvancar}
         aria-label="Próximos produtos"
-        className={`${SETA} -right-2 lg:-right-5`}
+        className={`${SETA} right-1 md:-right-2 lg:-right-5`}
       >
         <ChevronRightIcon width={20} height={20} />
       </button>

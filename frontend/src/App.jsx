@@ -11,6 +11,9 @@ import MeusPedidos from './pages/MeusPedidos';
 import SobreNos from './pages/SobreNos';
 import Contato from './pages/Contato';
 import TicketPremiado from './pages/TicketPremiado';
+import ProdutoDetalhe from './pages/ProdutoDetalhe';
+import PaginaErro from './pages/PaginaErro';
+import RecuperarSenha from './pages/RecuperarSenha';
 
 import { encerrarSessao } from './services/sessao';
 
@@ -98,6 +101,10 @@ export default function App() {
     case '/login':
       return <AuthPage tipo="login" />;
 
+    case '/recuperar-senha':
+    case '/redefinir-senha':
+      return <RecuperarSenha />;
+
     case '/admin/login':
       return <AuthPage tipo="admin" />;
 
@@ -119,7 +126,11 @@ case '/contato':
 case '/ticket-premiado':
   return <TicketPremiado />;  
 
+    case '/erro':
+      return <PaginaErro codigo={500} />;
+
     default:
-      return <Home />;
+      if (caminho.startsWith('/produto/')) return <ProdutoDetalhe />;
+      return <PaginaErro codigo={404} />;
   }
 }

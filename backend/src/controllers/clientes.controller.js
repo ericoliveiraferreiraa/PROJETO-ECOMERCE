@@ -68,4 +68,45 @@ function meusDados(req, res, next) {
   }
 }
 
-module.exports = { cadastrar, login, meusDados };
+function alterarSenha(req, res, next) {
+  const { senhaAtual, novaSenha } = req.body;
+  if (!senhaAtual || typeof novaSenha !== 'string' || novaSenha.length < 8) {
+    return res.status(400).json({ erro: 'Informe sua senha atual e uma nova senha com pelo menos 8 caracteres.' });
+  }
+  try {
+    const cliente = db.prepare('SELECT senha FROM cliente WHERE id_cliente = ?').get(req.cliente.id_cliente);
+    if (!cliente || !bcrypt.compareSync(senhaAtual, cliente.senha)) {
+      return res.status(401).json({ erro: 'A senha atual está incorreta.' });
+    }
+    db.prepare('UPDATE cliente SET senha = ? WHERE id_cliente = ?').run(bcrypt.hashSync(novaSenha, SALT_ROUNDS), req.cliente.id_cliente);
+    return res.json({ mensagem: 'Senha atualizada com sucesso.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function redefinirSenha(req, res, next) {
+  const email = String(req.body.email ?? '').trim().toLowerCase();
+  const { novaSenha } = req.body;
+  if (!email || typeof novaSenha !== 'string' || novaSenha.length < 8) {
+    return res.status(400).json({ erro: 'Informe o e-mail e uma nova senha com pelo menos 8 caracteres.' });
+  }
+
+  try {
+    const resultado = db.prepare(`
+      UPDATE cliente
+      SET senha = ?
+      WHERE lower(email) = ?
+    `).run(bcrypt.hashSync(novaSenha, SALT_ROUNDS), email);
+
+    if (resultado.changes === 0) {
+      return res.status(400).json({ erro: 'Não encontramos uma conta com esse e-mail.' });
+    }
+
+    return res.json({ mensagem: 'Senha redefinida. Agora você já pode entrar na sua conta.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { cadastrar, login, meusDados, alterarSenha, redefinirSenha };

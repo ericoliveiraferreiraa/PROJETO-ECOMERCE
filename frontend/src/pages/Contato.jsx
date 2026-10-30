@@ -1,10 +1,16 @@
-
+﻿
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Imagem from '../components/Imagem';
+import { InstagramIcon, FacebookIcon, TikTokIcon } from '../components/icons';
 
 const IMG_CONTATO = '/banner-fabrica.jpg';
+const REDES = [
+  { rotulo: 'Instagram', href: '#', Icone: InstagramIcon },
+  { rotulo: 'Facebook', href: '#', Icone: FacebookIcon },
+  { rotulo: 'TikTok', href: '#', Icone: TikTokIcon },
+];
 
 export default function Contato() {
   const [formulario, setFormulario] = useState({
@@ -13,6 +19,7 @@ export default function Contato() {
     assunto: '',
     mensagem: '',
   });
+  const [aviso, setAviso] = useState('');
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
@@ -25,11 +32,10 @@ export default function Contato() {
 
   function enviarMensagem(evento) {
     evento.preventDefault();
-
-    // O formulário ainda não está conectado ao backend.
-    window.alert(
-      'O formulário visual está pronto, mas o envio precisa ser conectado ao backend.'
-    );
+    const assunto = encodeURIComponent(`[Choco World] ${formulario.assunto}`);
+    const corpo = encodeURIComponent(`Nome: ${formulario.nome}\nE-mail: ${formulario.email}\n\n${formulario.mensagem}`);
+    window.location.href = `mailto:contato@chocoworld.com.br?subject=${assunto}&body=${corpo}`;
+    setAviso('Seu aplicativo de e-mail foi aberto com a mensagem pronta para envio.');
   }
 
   return (
@@ -120,31 +126,20 @@ export default function Contato() {
               <div className="mt-7 border-t border-choco-pessego/50 pt-5">
                 <h3 className="text-sm font-bold">Redes sociais</h3>
 
-                <div className="mt-3 flex gap-3">
-                  <a
-                    href="#"
-                    aria-label="Instagram"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 font-bold text-choco-vermelho"
-                  >
-                    ig
-                  </a>
-
-                  <a
-                    href="#"
-                    aria-label="Facebook"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 font-bold text-choco-vermelho"
-                  >
-                    f
-                  </a>
-
-                  <a
-                    href="#"
-                    aria-label="TikTok"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 font-bold text-choco-vermelho"
-                  >
-                    ♪
-                  </a>
-                </div>
+                <ul className="mt-3 flex gap-3">
+                  {REDES.map(({ rotulo, href, Icone }) => (
+                    <li key={rotulo}>
+                      <a
+                        href={href}
+                        aria-label={rotulo}
+                        title={rotulo}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-choco-vermelho transition-colors hover:bg-choco-vermelho hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-choco-vermelho"
+                      >
+                        <Icone width={22} height={22} />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div className="mt-6 overflow-hidden rounded-xl">
@@ -166,6 +161,7 @@ export default function Contato() {
                 onSubmit={enviarMensagem}
                 className="mt-5 space-y-4"
               >
+                {aviso && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{aviso}</p>}
                 <div>
                   <label
                     htmlFor="nome"
