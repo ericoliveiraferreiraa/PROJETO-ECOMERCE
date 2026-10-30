@@ -49,15 +49,9 @@ export default function CardProduto({ produto, onAdicionar }) {
           {produto.nome}
         </a>
 
-        {esgotado ? (
-          <p className="text-xs font-semibold text-choco-vermelho">
-            Esgotado
-          </p>
-        ) : (
-          <p className="truncate text-xs text-neutral-500">
-            {produto.descricao}
-          </p>
-        )}
+        <p className="truncate text-xs text-neutral-500">
+          {produto.descricao}
+        </p>
       </div>
 
       <div className="mt-auto flex flex-col items-stretch gap-2 border-t border-black/10 px-1 pt-3 sm:flex-row sm:items-center sm:justify-between">

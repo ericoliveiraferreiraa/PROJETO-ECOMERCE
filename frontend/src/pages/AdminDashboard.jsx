@@ -53,6 +53,11 @@ function AdminDashboard() {
   const [erroProdutos, setErroProdutos] = useState('');
   const [buscaProduto, setBuscaProduto] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [estoqueEditando, setEstoqueEditando] = useState(null);
+  const [quantidadeEstoqueEditando, setQuantidadeEstoqueEditando] = useState('');
+  const [salvandoEstoque, setSalvandoEstoque] = useState(false);
+  const [mensagemEstoque, setMensagemEstoque] = useState('');
+  const [erroEstoque, setErroEstoque] = useState('');
   const [formulario, setFormulario] = useState({
     nome: '', descricao: '', preco: '', imagem: '', id_categoria: '', quantidade_estoque: '0',
   });
@@ -210,6 +215,45 @@ function AdminDashboard() {
       setErroProdutos(erroApi.message || 'Não foi possível inativar o produto.');
     } finally {
       setProdutoEmAcao(null);
+    }
+  }
+
+  function iniciarEdicaoEstoque(produto) {
+    setEstoqueEditando(produto.id_produto);
+    setQuantidadeEstoqueEditando(String(produto.estoque ?? 0));
+    setMensagemEstoque('');
+    setErroEstoque('');
+  }
+
+  function cancelarEdicaoEstoque() {
+    setEstoqueEditando(null);
+    setQuantidadeEstoqueEditando('');
+    setErroEstoque('');
+  }
+
+  async function salvarEstoque(produto) {
+    const quantidade = Number(quantidadeEstoqueEditando);
+    if (quantidadeEstoqueEditando === '' || !Number.isInteger(quantidade) || quantidade < 0) {
+      setErroEstoque('Informe uma quantidade inteira igual ou maior que zero.');
+      return;
+    }
+
+    setSalvandoEstoque(true);
+    setErroEstoque('');
+    setMensagemEstoque('');
+    try {
+      await api(`/estoque/${produto.id_produto}`, {
+        method: 'PATCH',
+        autenticado: true,
+        body: { quantidade },
+      });
+      setMensagemEstoque(`Estoque de "${produto.nome}" atualizado para ${formatarQuantidade(quantidade)} unidade(s).`);
+      cancelarEdicaoEstoque();
+      await carregarProdutosECategorias();
+    } catch (erroApi) {
+      setErroEstoque(erroApi.message || 'Não foi possível atualizar o estoque.');
+    } finally {
+      setSalvandoEstoque(false);
     }
   }
 
@@ -396,16 +440,104 @@ function AdminDashboard() {
 
         {/* ESTOQUE */}
         {secaoAtiva === 'estoque' && (
-          <section className="space-y-5"><div className="grid gap-5 sm:grid-cols-2"><div className="rounded-2xl border border-amber-100 bg-white p-6 shadow-sm"><p className="text-sm font-medium text-stone-500">Unidades em estoque</p><p className="mt-3 text-3xl font-bold text-[#40251d]">{carregandoProdutos ? '...' : formatarQuantidade(totalEstoque)}</p><p className="mt-2 text-sm text-stone-500">Soma das unidades dos produtos ativos</p></div><div className="rounded-2xl border border-amber-100 bg-white p-6 shadow-sm"><p className="text-sm font-medium text-stone-500">Produtos com estoque baixo</p><p className="mt-3 text-3xl font-bold text-red-700">{carregandoProdutos ? '...' : formatarQuantidade(produtosEstoqueBaixo.length)}</p><p className="mt-2 text-sm text-stone-500">Produtos ativos com 5 unidades ou menos</p></div></div>
+          <section className="space-y-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="rounded-2xl border border-amber-100 bg-white p-6 shadow-sm">
+                <p className="text-sm font-medium text-stone-500">Unidades em estoque</p>
+                <p className="mt-3 text-3xl font-bold text-[#40251d]">{carregandoProdutos ? '...' : formatarQuantidade(totalEstoque)}</p>
+                <p className="mt-2 text-sm text-stone-500">Soma das unidades dos produtos ativos</p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-white p-6 shadow-sm">
+                <p className="text-sm font-medium text-stone-500">Produtos com estoque baixo</p>
+                <p className="mt-3 text-3xl font-bold text-red-700">{carregandoProdutos ? '...' : formatarQuantidade(produtosEstoqueBaixo.length)}</p>
+                <p className="mt-2 text-sm text-stone-500">Produtos ativos com 5 unidades ou menos</p>
+              </div>
+            </div>
             {erroProdutos && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{erroProdutos}</div>}
-            <div className="overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-100 px-5 py-4"><div><h3 className="font-bold text-[#40251d]">Controle de estoque</h3><p className="mt-1 text-sm text-stone-500">Produtos que precisam de reposição aparecem destacados.</p></div><button type="button" onClick={carregarProdutosECategorias} disabled={carregandoProdutos} className="rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-[#75452f] transition hover:bg-amber-50">Atualizar</button></div>
-              {carregandoProdutos ? <p className="p-8 text-center text-stone-500">Carregando estoque...</p> : produtosAtivos.length === 0 ? <p className="p-8 text-center text-stone-500">Não há produtos ativos para exibir.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="bg-[#f7efe4] text-stone-700"><tr><th className="px-5 py-4 font-semibold">Produto</th><th className="px-5 py-4 font-semibold">Categoria</th><th className="px-5 py-4 font-semibold">Quantidade</th><th className="px-5 py-4 font-semibold">Situação</th></tr></thead><tbody className="divide-y divide-stone-100">{produtosAtivos.map((produto) => { const quantidade = Number(produto.estoque ?? 0); const baixo = quantidade <= 5; return <tr key={produto.id_produto} className={`transition ${baixo ? 'bg-red-50/70' : 'hover:bg-amber-50/50'}`}><td className="px-5 py-4 font-semibold text-stone-800">{produto.nome}</td><td className="px-5 py-4">{produto.categoria || '—'}</td><td className={`px-5 py-4 font-bold ${baixo ? 'text-red-700' : 'text-stone-800'}`}>{formatarQuantidade(quantidade)} unidade(s)</td><td className="px-5 py-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${baixo ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{baixo ? 'Estoque baixo' : 'Estoque adequado'}</span></td></tr>; })}</tbody></table></div>}
+            {mensagemEstoque && <div role="status" className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">{mensagemEstoque}</div>}
+            {erroEstoque && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{erroEstoque}</div>}
+            <div className="overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-100 px-5 py-4">
+                <div>
+                  <h3 className="font-bold text-[#40251d]">Controle de estoque</h3>
+                  <p className="mt-1 text-sm text-stone-500">Produtos que precisam de reposição aparecem destacados.</p>
+                </div>
+                <button type="button" onClick={carregarProdutosECategorias} disabled={carregandoProdutos} className="rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-[#75452f] transition hover:bg-amber-50">Atualizar</button>
+              </div>
+              {carregandoProdutos ? <p className="p-8 text-center text-stone-500">Carregando estoque...</p> : produtosAtivos.length === 0 ? <p className="p-8 text-center text-stone-500">Não há produtos ativos para exibir.</p> : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px] text-left text-sm">
+                    <thead className="bg-[#f7efe4] text-stone-700">
+                      <tr>
+                        <th className="px-5 py-4 font-semibold">Produto</th>
+                        <th className="px-5 py-4 font-semibold">Categoria</th>
+                        <th className="px-5 py-4 font-semibold">Quantidade</th>
+                        <th className="px-5 py-4 font-semibold">Situação</th>
+                        <th className="px-5 py-4 font-semibold">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {produtosAtivos.map((produto) => {
+                        const quantidade = Number(produto.estoque ?? 0);
+                        const baixo = quantidade <= 5;
+                        const editando = estoqueEditando === produto.id_produto;
+                        return (
+                          <tr key={produto.id_produto} className={`transition ${baixo ? 'bg-red-50/70' : 'hover:bg-amber-50/50'}`}>
+                            <td className="px-5 py-4 font-semibold text-stone-800">{produto.nome}</td>
+                            <td className="px-5 py-4">{produto.categoria || '—'}</td>
+                            <td className={`px-5 py-4 font-bold ${baixo ? 'text-red-700' : 'text-stone-800'}`}>
+                              {editando ? (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  required
+                                  aria-label={`Quantidade em estoque de ${produto.nome}`}
+                                  value={quantidadeEstoqueEditando}
+                                  onChange={(evento) => setQuantidadeEstoqueEditando(evento.target.value)}
+                                  className="w-28 rounded-lg border border-stone-300 bg-white px-3 py-2 font-normal text-stone-800 outline-none focus:border-amber-700 focus:ring-2 focus:ring-amber-100"
+                                />
+                              ) : `${formatarQuantidade(quantidade)} unidade(s)`}
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${baixo ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                {baixo ? 'Estoque baixo' : 'Estoque adequado'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4">
+                              {editando ? (
+                                <div className="flex gap-2">
+                                  <button type="button" onClick={() => salvarEstoque(produto)} disabled={salvandoEstoque} className="rounded-lg bg-[#75452f] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#593423] disabled:opacity-50">
+                                    {salvandoEstoque ? 'Salvando...' : 'Salvar'}
+                                  </button>
+                                  <button type="button" onClick={cancelarEdicaoEstoque} disabled={salvandoEstoque} className="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50">
+                                    Cancelar
+                                  </button>
+                                </div>
+                              ) : (
+                                <button type="button" onClick={() => iniciarEdicaoEstoque(produto)} className="rounded-lg border border-amber-200 px-3 py-2 text-xs font-semibold text-[#75452f] transition hover:bg-amber-50">
+                                  Editar quantidade
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </section>
         )}
       </main>
 
-      <footer className="mt-12 border-t border-amber-100 bg-white"><div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-center text-sm text-stone-500 sm:flex-row sm:px-6 lg:px-8"><p className="font-semibold text-[#75452f]">🍫 Choco World</p><p>Painel administrativo</p></div></footer>
+      <footer className="mt-12 border-t border-amber-100 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-center text-sm text-stone-500 sm:flex-row sm:px-6 lg:px-8">
+          <Logo variante="rodape" />
+          <p>Painel administrativo</p>
+        </div>
+      </footer>
     </div>
   );
 }

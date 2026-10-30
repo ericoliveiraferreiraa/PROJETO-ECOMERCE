@@ -28,9 +28,9 @@ export default function ProdutoDetalhe() {
   const esgotado = produto && Number(produto.estoque) <= 0;
 
   return (
-    <div className="min-h-screen bg-choco-creme text-choco-marrom">
+    <div className="flex min-h-screen flex-col bg-choco-creme text-choco-marrom">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
         <a href="/produtos" className="text-sm font-bold text-choco-vinho hover:underline">← Voltar aos produtos</a>
         {!produto ? (
           <p className="py-24 text-center">Carregando produto...</p>

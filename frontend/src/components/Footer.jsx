@@ -1,4 +1,5 @@
 import { InstagramIcon, FacebookIcon, TikTokIcon } from './icons';
+import Logo from './Logo';
 
 const LINKS_LOJA = [
   { rotulo: 'Produtos', href: '/produtos' },
@@ -19,7 +20,9 @@ export default function Footer() {
     <footer className="bg-choco-vinho text-white">
       <div className="mx-auto grid max-w-6xl gap-7 px-4 py-9 sm:px-6 md:grid-cols-3 md:items-center md:gap-8">
         <div className="text-center">
-          <p className="text-xl font-extrabold tracking-wide">Choco World</p>
+          <div className="flex justify-center">
+            <Logo variante="rodape" />
+          </div>
           <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/75">
             Chocolates e momentos especiais para deixar o seu dia mais doce.
           </p>
